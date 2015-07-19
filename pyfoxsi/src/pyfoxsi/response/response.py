@@ -15,26 +15,41 @@ import astropy.units as u
 
 import pyfoxsi
 
-__all__ = ['test', 'Response']
+__all__ = [Response']
 
-def test():
-    print('foobar')
 
 class Response(object):
     """An object which provides the FOXSI telescope response"""
     def __init__(self):
-        pyfoxsi.shell_ids = np.arange(1, 40)
-        path = os.path.dirname(response.__file__)
+        path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):
             path = os.path.dirname(path)
+        path = os.path.join(path, 'data/')
         filename = 'effective_area_per_shell.csv'
         effarea_file = os.path.join(path, filename)
         self._eff_area_per_shell = pd.read_csv(effarea_file, index_col=0)
         # find what shells are missing
-        shell_numbers = np.array(eff_area.columns, np.uint)
+        shell_numbers = np.array(self._eff_area_per_shell.columns, np.uint)
         missing_shells = np.setdiff1d(shell_numbers, pyfoxsi.shell_ids)
         # remove the missing shells
+        self.__number_of_telescopes = 1
         for missing_shell in missing_shells:
             self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
         # now add the effective area of all of the shells together
-        self.effective_area = self._eff_area_per_shell.sum(axis=1)
+        self.effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
+        self.number_of_telescopes = pyfoxsi.number_of_telescopes
+
+    def plot(self):
+        ax = self.effective_area.plot()
+        ax.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x')
+        ax.set_ylabel('Effective area [$cm^2$]')
+        ax.set_xlabel('Energy [keV]')
+
+    @property
+    def number_of_telescopes(self):
+        return self.__number_of_telescopes
+
+    @number_of_telescopes.setter
+    def number_of_telescopes(self, x):
+        self.effective_area['total'] = self.effective_area['total'] / self.__number_of_telescopes * x
+        self.__number_of_telescopes = x
