@@ -20,6 +20,7 @@ __all__ = [Response']
 
 class Response(object):
     """An object which provides the FOXSI telescope response"""
+
     def __init__(self):
         path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):
