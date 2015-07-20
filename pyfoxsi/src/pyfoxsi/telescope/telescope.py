@@ -32,9 +32,10 @@ class Optic(object):
     def shell(self, shell_number):
         """Return the parameters of one shell"""
         try:
-            self.shell_params.loc[shell_number]
+            this_shell = self.shell_params.loc[shell_number]
         except:
             ValueError('Shell %i is missing.' % shell_number)
+        return this_shell
 
     @property
     def mass(self):
