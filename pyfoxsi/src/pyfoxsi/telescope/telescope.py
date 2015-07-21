@@ -10,7 +10,7 @@ import os.path
 import numpy as np
 
 class Optic(object):
-    """A FOXSI Optic"""
+    """A FOXSI Optic class definition."""
     def __init__(self):
         path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):

@@ -1,0 +1,1 @@
+Requirements------------ * IDL (>version?) * SSWIDL (what libraries)Setup-----To start using the FOXSI software, start SSWIDL inside the foxsi-smex/idl directoryand run the following setup script at the prompt.    IDL> @foxsi-smex-setup-scriptThis will load data and setup a variety of standardized variables for use throughthe code.
