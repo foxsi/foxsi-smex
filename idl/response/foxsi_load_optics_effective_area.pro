@@ -1,5 +1,5 @@
 ;+
-; NAME : foxsi_load_optics_effarea
+; NAME : foxsi_load_optics_effective_area
 ;
 ; PURPOSE : Load the optics effective area file.
 ;
@@ -16,7 +16,7 @@
 ; EXAMPLES : None
 ;
 
-FUNCTION foxsi_load_optics_effarea
+FUNCTION foxsi_load_optics_effective_area
 
     ; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_dir, foxsi_name, foxsi_optic_effarea, foxsi_number_of_modules
