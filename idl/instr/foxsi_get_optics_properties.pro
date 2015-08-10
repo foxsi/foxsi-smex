@@ -19,7 +19,8 @@
 FUNCTION foxsi_get_optics_properties
 
 	; load the foxsi-smex common block
-    COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_dir, foxsi_name, foxsi_optic_effarea, foxsi_number_of_modules
+    COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
+        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids
 
     data_filename = 'shell_parameters.csv'
     path = foxsi_data_dir + data_filename
