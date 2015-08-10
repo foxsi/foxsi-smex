@@ -1,7 +1,7 @@
 ;+
 ; NAME : foxsi_get_optics_effective_area
 ;
-; PURPOSE : Returns the optics effective area..
+; PURPOSE : Returns the optics effective area.
 ;
 ; SYNTAX : eff_area = foxsi_get_optics_effective_area()
 ;
@@ -32,7 +32,9 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot
 	energy = result.energy
 
 	; dummy values
-	eff_area = replicate(1, n_elements(energy))
+	eff_area_data = foxsi_load_optics_effective_area()
+    energy = eff_area_data[0, *]
+
 
 	IF keyword_set(energy_arr) THEN BEGIN
 	    eff_area_orig = interpol(eff_area, energy, energy_arr)
