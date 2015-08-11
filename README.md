@@ -9,4 +9,4 @@ Contains tools written in IDL. See the README in the IDL folder for more informa
 Contains a python module for FOXSI-SMEX. See the README in the pyfoxsi folder for more information.
 
 ## Data folder
-Contains data files. These files are common to both the IDL and Python tools.
+Contains data files. These files are common to both the IDL and Python tools. All data files should be provided (if possible) as text files so that changes can easily tracked.
