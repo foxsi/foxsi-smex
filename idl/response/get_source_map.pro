@@ -1,5 +1,9 @@
-FUNCTION get_source_array
+FUNCTION get_source_map, dx = dx, dy = dy, xc = xc, yc = yc
 
+DEFAULT, dx, 1
+DEFAULT, dy, 1
+DEFAULT, xc, 0
+DEFAULT, yc, 0
 
 source_array = dblarr(150,150) ;,100) < energy dimension ; line_energy = 6/20*100.0
 
@@ -33,7 +37,11 @@ source_centre2 = [7*x_size/8,5*(y_size/8) ]
 
 	ENDFOR
 
-RETURN, source_array
+
+source_map = make_map(source_array, dx=dx, dy=dy, xc = xc, yc = yc, id = "Source Map")
+
+
+RETURN, source_map
 
 END
 
