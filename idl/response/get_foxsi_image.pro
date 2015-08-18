@@ -10,19 +10,28 @@
 ;;;               the keyword px = pix_size (default = 3) to reflect the
 ;;;               loss of resolution due to the finite strip size in the detectors.
 ;;; 
-;;;CALL SEQUENCE: rebinned_convolved_map = get_foxsi_image(source_map)
 ;;;
-;;;KEYWORDS:      px = "pixel size" in arcseconds, default is 3
+;;;CALL SEQUENCE: rebinned_convolved_map = get_foxsi_image()
 ;;;
-;;;COMMENTS:      -Runtime scales badly with FOV size, if source is far from edge of FOV then 
-;;;               a modification can be made to speed up the code, see note further down.
-;;;               -For the moment, psf_array and source_map.data must
-;;;               have the same dimensions, at the moment these are
+;;;
+;;;KEYWORDS:      source_map = "source_map". User inputted source, if
+;;;               blank, default generated from get_source_map
+;;;               function
+;;;
+;;;               px = "pixel size" in arcseconds, default is 3
+;;;
+;;;
+;;;COMMENTS:      -Runtime scales badly with FOV size
+;;;               -The default source array is 
 ;;;               set to [150,150] ~2.5' X 2.5' FOV at 1 arcsec per
-;;;               pixel
+;;;               pixel, this takes a few seconds to run.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION get_foxsi_image,source_map, px = pix_size
+FUNCTION get_foxsi_image,source_map = source_map, px = pix_size
+
+IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
+
+DEFAULT, source_map, get_source_map()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
 DEFAULT, pix_size, 3
@@ -41,12 +50,28 @@ RESOLVE_ROUTINE, 'get_psf_array', /IS_FUNCTION
 x=0 ;; Redundant FOV coordinates required as arguments for get_psf_array
 y=0
 
-;;;Comment out the line below::::
-psf_array = get_psf_array(source_map.xc,source_map.yc,source_map.dx,source_map.dy,x,y) 
-
 
 x_size = N_ELEMENTS(REFORM(source_map.data[*,0]))*1.0  ;;; Get dimensions of FOV in pixels
 y_size = N_ELEMENTS(REFORM(source_map.data[0,*]))*1.0 
+
+print, strcompress('Source_Array_is_'+string(N_ELEMENTS(REFORM(source_map.data[*,0]))) $
++'x'+string(N_ELEMENTS(REFORM(source_map.data[0,*])))+'_Pixels', /REMOVE_AL)
+
+;; If psf is large and has non zero intensity far from the psf centre
+;; then the psf array must be larger than the source array or some
+;; point spread emission will be lost due to array cutoffs. For
+;; perfect reconstruction in all cases, scale factor should be 2
+
+
+psf_scale_factor = 2
+
+;;;Comment out the line below::::
+psf_array = get_psf_array(source_map.xc,source_map.yc,source_map.dx                  $
+,source_map.dy,x,y, psf_scale_factor,x_size,y_size) 
+
+psf_x_size = n_elements(reform(psf_array[*,0]))*1.0
+psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
+
 
 convolved_array = DBLARR(x_size,y_size)
 
@@ -70,39 +95,28 @@ FOR i = 0.0, N_ELEMENTS(source_map.data)-1 DO BEGIN
 
       ; Uncomment line below to introduce FOV coord dependence to get_psf_array      
       ; psf_array=get_psf_array(source_map.xc,source_map.yc,source_map.dx,source_map,dy,x,y)
-
-
        
+
+
         ;; Do convolution and correct for wrapping due to SHIFT
         ;; function for each pixel.
- 
-        ;; We do this by, for a given x,y point in the source image
-        ;; creating an array with dimensions 3 x dimensions of the
-        ;; psf_array with the original psf array situated at the
-        ;; centre. This array is then shifted by the corresponding FOV
-        ;; pixel position and only the central portion of the large
-        ;; array corresponding to the dimensionsons of the original
-        ;; psf is taken and added to the convolution array - any
-        ;; overspills over the edge of the original psf are ignored.
+	convolved_pixel = psf_array * source_map.data[x,y]
+	shifted_convolved_pixel = SHIFT(convolved_pixel,-1*(x_size/2 - x),-1*(y_size/2 - y))
+      
+        IF x_size/2 - x GT 0 THEN BEGIN
+           shifted_convolved_pixel[psf_x_size-(x_size/2 - x):*,0:*] = 0
+        ENDIF ELSE BEGIN
+           shifted_convolved_pixel[0:x-x_size/2-1,0:*] = 0
+        ENDELSE
 
-        convolved_pixel = DBLARR(3*x_size, 3*y_size)
-	convolved_pixel[x_size:2*x_size-1, y_size:2*y_size-1] =              $
-        psf_array * source_map.data[x,y]
-	shifted_convolved_pixel = SHIFT(convolved_pixel,-1*(x_size/2 - x),   $
-        -1*(y_size/2 - y))
-	shifted_convolved_pixel = shifted_convolved_pixel[x_size:2*x_size-1, $
-        y_size:2*y_size-1]
- 
-        ;; If source is far from edges and won't be spread over the edge of the FOV then
-        ;; comment out the preceding 4 lines to speed up code and
-        ;; uncomment the next 2lines  to slightly speed up code:
+        IF y_size/2 - y GT 0 THEN BEGIN
+           shifted_convolved_pixel[psf_y_size-(y_size/2 - y):*,0:*] = 0
+        ENDIF ELSE BEGIN
+           shifted_convolved_pixel[0:y-y_size/2-1,0:*] = 0
+        ENDELSE
 
-	;convolved_pixel = psf_array * source_map.data[x,y]
-	;shifted_convolved_pixel = SHIFT(convolved_pixel,-1*(x_size/2 - x),-1*(y_size/2 - y))
-        ; if the above 2 lines are used, then a source with nonzero intensity near
-        ; an edge of the FOV will be spread over the edge of the FOV and wrap
-        ; around unphysically to the opposite edge of the array
-       
+       shifted_convolved_pixel = shifted_convolved_pixel[(psf_x_size-x_size)/2:(psf_x_size+x_size)/2-1, (psf_x_size-x_size)/2:(psf_y_size+y_size)/2-1]
+ 
        convolved_array = convolved_array + shifted_convolved_pixel
 
 ENDFOR

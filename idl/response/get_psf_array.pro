@@ -18,7 +18,7 @@
 ;;;                code below.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION get_psf_array,xc,yc, dx, dy, x, y 
+FUNCTION get_psf_array,xc,yc, dx, dy, x, y, psf_scale_factor,x_size, y_size 
 
 ;; Set defaults to the positon corresponding to the currently
 ;; generated PSF parameters
@@ -32,10 +32,10 @@ DEFAULT, y, 0
 ;;; Note array size here must match that of the source_map.data array
 ;;; inputted in to the main get_foxsi_image function
 
-psf_array = dblarr(150,150)
+psf_array = DBLARR(psf_scale_factor*x_size,psf_scale_factor*y_size)
 
-x_size = n_elements(reform(psf_array[*,0]))*1.0
-y_size = n_elements(reform(psf_array[0,*]))*1.0
+psf_x_size = n_elements(reform(psf_array[*,0]))*1.0
+psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF, for now just gaussians
 
@@ -49,14 +49,14 @@ sigma_y2 = 7.21397
 sigma_x3 = 47.5
 sigma_y3 = 240.314
 
-psf_centre1 = [(x_size+1)/2, (y_size+1)/2 ]
-psf_centre2 = [(x_size+1)/2, (y_size+1)/2 ]
-psf_centre3 = [(x_size+1)/2, (y_size+1)/2 ]
+psf_centre1 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
+psf_centre2 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
+psf_centre3 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
 
 ;; Generate gaussian from above parameters
-psf_1 =0.9875*psf_gaussian(npix = [x_size,y_size], /double, st_dev = [sigma_x1,sigma_y1], centroid = psf_centre1)
-psf_2 = 0.218387*psf_gaussian(npix = [x_size,y_size], /double, st_dev = [sigma_x2,sigma_y2], centroid = psf_centre2)
-psf_3 = 0.0762158*psf_gaussian(npix = [x_size,y_size], /double, st_dev = [sigma_x3,sigma_y3], centroid = psf_centre3)
+psf_1 =0.9875*psf_gaussian(npix = [psf_x_size,psf_y_size], /double, st_dev = [sigma_x1,sigma_y1], centroid = psf_centre1)
+psf_2 = 0.218387*psf_gaussian(npix = [psf_x_size,psf_y_size], /double, st_dev = [sigma_x2,sigma_y2], centroid = psf_centre2)
+psf_3 = 0.0762158*psf_gaussian(npix = [psf_x_size,psf_y_size], /double, st_dev = [sigma_x3,sigma_y3], centroid = psf_centre3)
 
 ;; Normalise total PSF so that total of psf_array EQ 1
 psf_array = 1.0 * (psf_1+psf_2+psf_3)/total(psf_1+psf_2+psf_3)
