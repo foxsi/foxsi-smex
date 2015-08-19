@@ -1,7 +1,7 @@
 
 Requirements
 ------------
- * IDL (>version?)
+ * IDL (written/tested on IDL 8.4; should work on earlier versions)
  * SSWIDL (what libraries)
 
 Setup
@@ -43,10 +43,10 @@ This function is intended to simulate the image measured by the FOXSI detectors 
 given input source image. Currently this must be a 2D monochromatic source, future iterations
 of this programme will introduce the possibility of different energy photons in the source.
 
-This involves modelling the convolution of the image due to  the optics modules and the 
-pixelisation due to the finite detector width. The function may be run with an automatically 
-generated source (a narrow gaussian to the right hand side of a 150x150 FOV) and a default 
-pixelisation ratio of 3 with the call:
+This involves modelling the convolution of the image due to the point spread function of
+the optics modules and the pixelisation of the detectors. The function may be run with an 
+automatically generated source (a narrow gaussian to the right hand side of a 150x150 FOV) 
+and a default pixelisation ratio of 3 with the call:
 
     IDL> rebinned_convolved_map = get_foxsi_image()
 
