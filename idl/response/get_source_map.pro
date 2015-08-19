@@ -26,7 +26,7 @@ DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
 
-source_array = DBLARR(150,150) ;,100) < energy dimension ; line_energy = 6/20*100.0
+source_array = DBLARR(160,160) ;,100) < energy dimension ; line_energy = 6/20*100.0
 
 ;;;; Warning: changing the above dimensions of source_array will significantly affect the code
 ;;;; runtime. This must also match the dimensions of the psf array for the moment. This is an

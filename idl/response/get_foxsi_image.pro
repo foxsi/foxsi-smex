@@ -18,7 +18,7 @@
 ;;;               blank, default generated from get_source_map
 ;;;               function
 ;;;
-;;;               px = "pixel size" in arcseconds, default is 3
+;;;               px = "pixel size of detector" in arcseconds, default is 3''
 ;;;
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
@@ -31,13 +31,17 @@ FUNCTION get_foxsi_image,source_map = source_map, px = pix_size
 
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
+;;;;; Check for updates to peripheral functions for the purposes of testing
+RESOLVE_ROUTINE, 'get_psf_array', /IS_FUNCTION
+RESOLVE_ROUTINE, 'get_source_map', /IS_FUNCTION
+
+;;;; Define default source_map input in case of no user input
 DEFAULT, source_map, get_source_map()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
 DEFAULT, pix_size, 3
 
-;;;;; Check for updates to get_psf_array.pro for the purposes of testing
-RESOLVE_ROUTINE, 'get_psf_array', /IS_FUNCTION
+
 
 
 ;;Below, we call the point spread function assuming it is constant
@@ -126,7 +130,7 @@ PRINT, '100% Complete'
 
 
 ;;; Do rebinning due to detector pixelation;;;
-rebinned_convolved_array = FREBIN(convolved_array,x_size/pix_size,y_size/pix_size, /TOTAL)
+rebinned_convolved_array = FREBIN(convolved_array,x_size*source_map.dx/pix_size,y_size*source_map.dy/pix_size, /TOTAL)
 
 
 ;; Detect if FREBIN causes unacceptable loss of counts (e.g for non
@@ -139,12 +143,11 @@ IF ABS(TOTAL(rebinned_convolved_array) - TOTAL(convolved_array)) GT 0.0001  THEN
 ENDIF
 
 
-;;; Makes and outputs map of convolved and rebinned array with pixel size given
-;;; by the pixel size of the source map multiplied by the pixelation
-;;; ratio given as a keyword in this function. The centre of the map
-;;; is preserved as the centre of the source image
+;;; Makes and outputs map of convolved and rebinned array with pixel size 
+;;; equal to the value of the px keyword (default = 3'' per pixel)
+;;; The centre of the map is preserved as the centre of the source image
 
-rebinned_convolved_map = make_map(rebinned_convolved_array, dx = source_map.dx*pix_size, dy = source_map.dy*pix_size, xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS('Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL),time = '')
+rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = pix_size, xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS('Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL))
 
 print,  'rebinned_convolved_map returned'
 
