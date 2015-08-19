@@ -1,6 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;FUNCTION:      "get_foxsi_image"
 ;;;
+;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
+;;;
 ;;;DESCRIPTION:   Function which accepts a map of a source as an input, obtained through
 ;;;               calling source_map = get_source_map(). This map is the
 ;;;               convolved with a point spread function obtained through calling the

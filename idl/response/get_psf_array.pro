@@ -1,6 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;FUNCTION:        "get_psf_array"
 ;;;
+;;;HISTORY:         Initial Commit - 08/19/15 - Samuel Badman
+;;;
 ;;;DESCRIPTION:     Function which generates a prescribed 2D point
 ;;;                 spread function with specified parameters. Takes arguments of the
 ;;;                 solar coordinates of the centre of the image (xc, yc), the size of the

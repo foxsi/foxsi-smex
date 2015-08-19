@@ -1,5 +1,7 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;FUNCTION:      "get_source_map"         
+;;;
+;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
 ;;;                                                                                            
 ;;;DESCRIPTION:   Funtion which returns a toy example of a source map which can be fed into
 ;;;               the get_foxsi_image programme to see what it looks like on the 
