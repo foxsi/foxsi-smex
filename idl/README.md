@@ -46,7 +46,7 @@ of this programme will introduce the possibility of different energy photons in 
 This involves modelling the convolution of the image due to the point spread function of
 the optics modules and the pixelisation of the detectors. The function may be run with an 
 automatically generated source (a narrow gaussian to the right hand side of a 150x150 FOV) 
-and a default pixelisation ratio of 3 with the call:
+and a default detector pixel size of 3 arcseconds with the call:
 
     IDL> rebinned_convolved_map = get_foxsi_image()
 
@@ -55,9 +55,9 @@ And the output viewed with the command:
     IDL> plot_map, rebinned_convolved_map
 
 Alternatively, a user supplied source_map may be supplied and the function run with a 
-custom pixelisation ratio as follows:
+custom detector pixel size (in arcseconds) as follows:
 
-    IDL> rebinned_convolved_map = get_foxsi_image(source_map, px = "Your Pixelisation Ratio")
+    IDL> rebinned_convolved_map = get_foxsi_image(source_map, px = "Your Pixelisation Size")
 
 Note the source_map file contains information on the pixel size in arcseconds and the solar
 coordinates of the centre of the field of view. This is automatically read in and propagated
