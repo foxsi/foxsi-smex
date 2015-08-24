@@ -26,7 +26,9 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot
 
 	; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
-        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids
+        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
+        foxsi_thick_shutter_thickness_mm, foxsi_thin_shutter_thickness_mm, $
+        foxsi_detector_thickness_um
 
 	eff_area = foxsi_load_optics_effective_area()
 
