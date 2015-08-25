@@ -31,9 +31,7 @@ DEFAULT, yc, 0
 source_array = DBLARR(150,150) ;,100) < energy dimension ; line_energy = 6/20*100.0
 
 ;;;; Warning: changing the above dimensions of source_array will significantly affect the code
-;;;; runtime. This must also match the dimensions of the psf array for the moment. This is an
-;;;; issue to be discussed.
-
+;;;; runtime. 
 
 x_size = N_ELEMENTS(REFORM(source_array[*,0]))*1.0
 y_size = N_ELEMENTS(REFORM(source_array[0,*]))*1.0
