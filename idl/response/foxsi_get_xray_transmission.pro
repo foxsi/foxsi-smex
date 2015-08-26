@@ -1,5 +1,29 @@
+; NAME : foxsi_get_xray_transmission
+;
+; PURPOSE : Returns the x-ray transmission efficiency through a material
+;
+; SYNTAX : trans = foxsi_get_xray_transmission()
+;
+; INPUTS :
+;           thickness_mm - the thickness in mm
+;           material - material name as a string
+;
+; Optional Inputs :
+;			energy_arr - array of energies in keV to interpolate effective area
+;                            onto.
+;
+; KEYWORDS :
+;			plot - if true then plot to the screen
+;
+; RETURNS : struct
+;               energy_keV - the energy in keV
+;               absorption - the  absorption efficiency
+;               transmission - the transmission efficiency
+;
+; EXAMPLES : None
+;
 
-FUNCTION foxsi_get_xray_transmission, thick, material, ENERGY_ARR = energy_arr, $
+FUNCTION foxsi_get_xray_transmission, thickness_mm, material, ENERGY_ARR = energy_arr, $
     PLOT = plot
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
@@ -8,36 +32,39 @@ FUNCTION foxsi_get_xray_transmission, thick, material, ENERGY_ARR = energy_arr, 
         foxsi_detector_thickness_um
 
     ; load the data
-    file_id = H5F_OPEN(foxsi_data_path + 'mass_attenuation_coefficient.hdf5')
-    dataset_cdte = H5D_OPEN(file_id, material)
-    ; Read in the actual image data.
-    data = H5D_READ(dataset_cdte)
+    path = foxsi_data_path + 'mass_atten_idl/' + material + '.csv'
+    f = file_search(path)
+    IF f EQ '' THEN BEGIN
+        print, 'File ' + path + ' not found.'
+        print, 'Data for ' + material + ' may not exist?'
+        RETURN, -1
+    ENDIF
+    data = read_csv(path, table_header=header, n_table_header = 4)
+    density_cgs = float(strmid(header[3], 11, 4))
 
-    energy_keV = data[0] * 1000.0
-    attenuation_coeff = data[1]
+    data_energy_keV = data.field1 * 1000.0
+    data_attenuation_coeff = data.field2
 
-    IF keyword_set(energy_arr) THEN BEGIN
-        atten_len_um = interpol(atten_len_um, energy_keV, energy_arr)
-    ENDIF ELSE energy_arr = energy_keV
+    IF NOT keyword_set(energy_arr) THEN energy_keV = findgen(60) ELSE $
+        energy_keV = energy_arr
 
+    ; interpolate in log space as function is better behaved in that space
+    atten_len_um = 10^interpol(alog10(data_attenuation_coeff), alog10(data_energy_keV), alog10(energy_keV))
     ;should load this from the hdf5 file
-    density_cgs = 6.2
-    path_length_m = thick_um * 1e-6
-    transmission = 1 - exp(-attenuation_coeff * density_cgs * path_length_m * 100.0)
-    efficiency = 1 - transmission
+    path_length_cm = thickness_mm / 10.0
+    absorption = exp(-atten_len_um * density_cgs * path_length_cm)
+    transmission = 1 - absorption
 
     IF keyword_set(PLOT) THEN BEGIN
-        plot, energy_arr, transmission, xtitle = 'Energy [keV]', ytitle = 'Efficiency', $
-              /nodata, yrange = [0.0, 1.0], charsize = 1.5
-        oplot, energy_arr, transmission, psym = -4, linestyle = 1
-        oplot, energy_arr, 1 - transmission, psym = -4, linestyle = 2
-        ssw_legend, linestyle=[1,2], text=['Transmission', 'Efficiency']
+        plot, energy_keV, absorption, xtitle = 'Energy [keV]', ytitle = 'Efficiency', $
+              /nodata, yrange = [0.0, 1.2], charsize = 1.5, title=material
+        oplot, energy_keV, absorption, psym = -4
+        oplot, energy_keV, transmission, psym = -5
+        ssw_legend, ['Transmission', 'Absorption'], linestyle=[1,2], psym=[5,4]
     ENDIF
 
-    result = create_struct("energy_keV", energy_arr, "efficiency", efficiency, $
+    result = create_struct("energy_keV", energy_keV, "absorption", absorption, $
         "transmission", transmission)
 
-    H5F_OPEN, file_id
     RETURN, result
-
 END
