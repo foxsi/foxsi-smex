@@ -31,6 +31,6 @@ FUNCTION foxsi_get_blanket_transmission, ENERGY_ARR = energy_arr, PLOT = plot
     IF NOT keyword_set(energy_arr) THEN energy_keV = findgen(60) ELSE $
         energy_keV = energy_arr
 
-    result = foxsi_get_xray_transmission(energy_arr = energy_arr, foxsi_blanket_thickness_mm, 'mylar', /plot)
+    result = foxsi_get_xray_transmission(energy_arr = energy_arr, foxsi_blanket_thickness_mm, 'mylar', plot=plot)
     RETURN, result
 END
