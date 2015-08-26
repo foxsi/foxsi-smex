@@ -51,8 +51,8 @@ FUNCTION foxsi_get_xray_transmission, thickness_mm, material, ENERGY_ARR = energ
     atten_len_um = 10^interpol(alog10(data_attenuation_coeff), alog10(data_energy_keV), alog10(energy_keV))
     ;should load this from the hdf5 file
     path_length_cm = thickness_mm / 10.0
-    absorption = exp(-atten_len_um * density_cgs * path_length_cm)
-    transmission = 1 - absorption
+    transmission = exp(-atten_len_um * density_cgs * path_length_cm)
+    absorption = 1 - transmission
 
     IF keyword_set(PLOT) THEN BEGIN
         plot_title = material + ' ' + num2str(thickness_mm) + ' mm'
