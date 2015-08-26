@@ -28,8 +28,7 @@ FUNCTION foxsi_get_xray_transmission, thickness_mm, material, ENERGY_ARR = energ
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_thick_shutter_thickness_mm, foxsi_thin_shutter_thickness_mm, $
-        foxsi_detector_thickness_um
+        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
 
     ; load the data
     path = foxsi_data_path + 'mass_atten_idl/' + material + '.csv'
@@ -56,8 +55,9 @@ FUNCTION foxsi_get_xray_transmission, thickness_mm, material, ENERGY_ARR = energ
     transmission = 1 - absorption
 
     IF keyword_set(PLOT) THEN BEGIN
+        plot_title = material + ' ' + num2str(thickness_mm) + ' mm'
         plot, energy_keV, absorption, xtitle = 'Energy [keV]', ytitle = 'Efficiency', $
-              /nodata, yrange = [0.0, 1.2], charsize = 1.5, title=material
+              /nodata, yrange = [0.0, 1.2], charsize = 1.5, title=plot_title
         oplot, energy_keV, absorption, psym = -4
         oplot, energy_keV, transmission, psym = -5
         ssw_legend, ['Transmission', 'Absorption'], linestyle=[1,2], psym=[5,4]

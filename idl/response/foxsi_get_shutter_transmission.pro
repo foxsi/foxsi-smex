@@ -7,6 +7,7 @@
 ;
 ; INPUTS :
 ;           shutter_state -
+;               0 no shutter
 ;               1 is thin shutter in
 ;               2 is thick shutter in
 ;
@@ -18,40 +19,27 @@
 ;			plot - if true then plot to the screen
 ;
 ; RETURNS : struct
-;               energy_keV - the energy in keV
-;               efficiency - the detector efficiency
+;               same as foxsi_get_xray_transmission
 ;
 ; EXAMPLES : None
 ;
 
-FUNCTION get_foxsi_get_shutter_transmission, shutter_state, ENERGY_ARR = energy_arr, PLOT = plot
+FUNCTION foxsi_get_shutter_transmission, shutter_state, ENERGY_ARR = energy_arr, PLOT = plot
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_thick_shutter_thickness_mm, foxsi_thin_shutter_thickness_mm, $
-        foxsi_detector_thickness_um
+        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
 
-    IF NOT keyword_set(energy_arr) THEN energy_arr = findgen(60)
-
-    switch shutter_state OF
-        0: thick_um = 0
-        1: thick_um = foxsi_thin_shutter_thickness_mm
-        2: thick_um = foxsi_thick_shutter_thickness_mm
-        ELSE print('Unknown shutter state')
-    endswitch
-
-    IF shutter_state EQ 1 THEN $
-        result = foxsi_get_xray_transmission(energy_arr = energy_arr, thick_um, 'be')
-
-    energy_arr = result.energy_keV
-
-    IF keyword_set(PLOT) THEN BEGIN
-        plot, energy_arr, result.transmission, xtitle = 'Energy [keV]', ytitle = 'Transmission', $
-              /nodata, yrange = [0.0, 1.0], charsize = 1.5
-        oplot, energy_arr, result.transmission, psym = -4
+    IF shutter_state GT n_elements(foxsi_shutters_thickness_mm)-1 THEN BEGIN
+        print,'Unknown shutter state'
+        RETURN, -1
     ENDIF
 
-    result = create_struct("energy_keV", energy_arr, "transmission", result.transmission)
+    thick_mm = foxsi_shutters_thickness_mm[shutter_state]
+
+    IF NOT keyword_set(energy_arr) THEN energy_arr = findgen(60)
+    result = foxsi_get_xray_transmission(energy_arr = energy_arr, thick_mm, 'be', /plot)
+    energy_keV = result.energy_keV
 
     RETURN, result
 END
