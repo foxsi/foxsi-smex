@@ -52,7 +52,7 @@ FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
               /nodata, charsize = 1.5, title = plot_title
         oplot, energy_arr, eff_area_cm2, psym = -4
         oplot, energy_arr, eff_area_cm2_optic, psym = -5
-        ssw_legend, ['Total', 'Module'], psym=[5,4]
+        ssw_legend, ['Total', 'Module'], psym=[4,5]
     ENDIF
     result = create_struct("energy_keV", reform(energy_arr), "eff_area_cm2", eff_area_cm2, "eff_area_optic_cm2", eff_area_cm2_optic)
     RETURN, result
