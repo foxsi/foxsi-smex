@@ -2,11 +2,11 @@
 ;
 ; PURPOSE : Returns the x-ray transmission efficiency through a material
 ;
-; SYNTAX : trans = foxsi_get_xray_transmission()
+; SYNTAX : trans = foxsi_get_xray_transmission(thickness_mm, material)
 ;
 ; INPUTS :
 ;           thickness_mm - the thickness in mm
-;           material - material name as a string
+;           material - material name as a string (e.g. cdte, si, mylar, be)
 ;
 ; Optional Inputs :
 ;			energy_arr - array of energies in keV to interpolate effective area

@@ -1,7 +1,7 @@
 ;+
 ; NAME : foxsi_get_detector_efficiency
 ;
-; PURPOSE : Returns the detector efficiency as a percent.
+; PURPOSE : Returns the detector efficiency as a fraction (0-1).
 ;
 ; SYNTAX : det_eff = get_foxsi_detector_efficiency()
 ;

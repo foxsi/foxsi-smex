@@ -3,7 +3,7 @@
 ;
 ; PURPOSE : Returns the shutter transmission efficiency.
 ;
-; SYNTAX : trans = get_foxsi_get_shutter_transmission()
+; SYNTAX : trans = get_foxsi_get_shutter_transmission(shutter_state)
 ;
 ; INPUTS :
 ;           shutter_state -
