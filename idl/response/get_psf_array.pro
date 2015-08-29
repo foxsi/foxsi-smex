@@ -20,7 +20,7 @@
 ;;;                code below.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION get_psf_array,xc,yc, dx, dy, x, y, psf_scale_factor,x_size, y_size 
+FUNCTION get_psf_array,xc,yc, dx, dy, x, y,x_size, y_size 
 
 ;; Set defaults to the positon corresponding to the currently
 ;; generated PSF parameters
@@ -34,7 +34,10 @@ DEFAULT, y, 0
 ;;; Note array size here must match that of the source_map.data array
 ;;; inputted in to the main get_foxsi_image function
 
-psf_array = DBLARR(psf_scale_factor*x_size,psf_scale_factor*y_size)
+psf_scale_factor = 2
+
+IF x_size MOD 2 NE 0.0 THEN psf_array = DBLARR(psf_scale_factor*x_size+1,psf_scale_factor*y_size+1)
+IF x_size MOD 2 EQ 0.0 THEN psf_array = DBLARR(psf_scale_factor*x_size,psf_scale_factor*y_size)
 
 psf_x_size = n_elements(reform(psf_array[*,0]))*1.0
 psf_y_size = n_elements(reform(psf_array[0,*]))*1.0

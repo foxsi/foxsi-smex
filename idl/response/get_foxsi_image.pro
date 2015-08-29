@@ -2,6 +2,7 @@
 ;;;FUNCTION:      "get_foxsi_image"
 ;;;
 ;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
+;;;               Improved Convolution Method - 08/27/15 - Samuel Badman               
 ;;;
 ;;;DESCRIPTION:   Function which accepts a map of a source as an input, obtained through
 ;;;               calling source_map = get_source_map(). This map is the
@@ -27,6 +28,8 @@
 ;;;               -The default source array is 
 ;;;               set to [150,150] ~2.5' X 2.5' FOV at 1 arcsec per
 ;;;               pixel, this takes a few seconds to run.
+;;;               -Convolution method improved - 08/27/15 - Please
+;;;                only use square source maps for the best accuracy.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FUNCTION get_foxsi_image,source_map = source_map, px = pix_size
@@ -69,11 +72,9 @@ print, strcompress('Source_Array_is_'+string(N_ELEMENTS(REFORM(source_map.data[*
 ;; perfect reconstruction in all cases, scale factor should be 2
 
 
-psf_scale_factor = 2
-
 ;;;Comment out the line below::::
 psf_array = get_psf_array(source_map.xc,source_map.yc,source_map.dx                  $
-,source_map.dy,x,y, psf_scale_factor,x_size,y_size) 
+,source_map.dy,x,y,x_size,y_size) 
 
 psf_x_size = n_elements(reform(psf_array[*,0]))*1.0
 psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
@@ -81,53 +82,33 @@ psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
 
 convolved_array = DBLARR(x_size,y_size)
 
-FOR i = 0.0, N_ELEMENTS(source_map.data)-1 DO BEGIN
+IF x_size MOD 2 EQ 0 THEN BEGIN
 
-        x = (i MOD x_size)*1.0   ;;;Calculate FOV x,y coordinates from FOR loop variable
+    FOR i = 0.0, N_ELEMENTS(source_map.data)-1 DO BEGIN
+
+        x = (i MOD x_size)*1.0  
         y = (i - x)/x_size*1.0
-
-
-        ;;;Below: Progress Monitor ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.1 THEN PRINT, '10% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.2 THEN PRINT, '20% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.3 THEN PRINT, '30% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.4 THEN PRINT, '40% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.5 THEN PRINT, '50% Complete'	
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.6 THEN PRINT, '60% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.7 THEN PRINT, '70% Complete'
-	IF i/(N_ELEMENTS(source_map.data)) EQ 0.8 THEN PRINT, '80% Complete'
-        IF i/(N_ELEMENTS(source_map.data)) EQ 0.9 THEN PRINT, '90% Complete'
-        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-      ; Uncomment line below to introduce FOV coord dependence to get_psf_array      
-      ; psf_array=get_psf_array(source_map.xc,source_map.yc,source_map.dx,source_map,dy,x,y)
        
-
-
-        ;; Do convolution and correct for wrapping due to SHIFT
-        ;; function for each pixel.
 	convolved_pixel = psf_array * source_map.data[x,y]
-	shifted_convolved_pixel = SHIFT(convolved_pixel,-1*(x_size/2 - x),-1*(y_size/2 - y))
-      
-        IF x_size/2 - x GT 0 THEN BEGIN
-           shifted_convolved_pixel[psf_x_size-(x_size/2 - x):*,0:*] = 0
-        ENDIF ELSE BEGIN
-           shifted_convolved_pixel[0:x-x_size/2-1,0:*] = 0
-        ENDELSE
-
-        IF y_size/2 - y GT 0 THEN BEGIN
-           shifted_convolved_pixel[psf_y_size-(y_size/2 - y):*,0:*] = 0
-        ENDIF ELSE BEGIN
-           shifted_convolved_pixel[0:y-y_size/2-1,0:*] = 0
-        ENDELSE
-
-       shifted_convolved_pixel = shifted_convolved_pixel[(psf_x_size-x_size)/2:(psf_x_size+x_size)/2-1, (psf_x_size-x_size)/2:(psf_y_size+y_size)/2-1]
- 
+	shifted_convolved_pixel = convolved_pixel[(psf_x_size/2-x):(psf_x_size/2-x+x_size-1), (psf_y_size/2 -y):(psf_y_size/2-y+y_size-1)]
        convolved_array = convolved_array + shifted_convolved_pixel
 
-ENDFOR
+    ENDFOR
+ENDIF ELSE BEGIN
 
-PRINT, '100% Complete'
+    FOR i = 0.0, N_ELEMENTS(source_map.data)-1 DO BEGIN
+
+        x = (i MOD x_size)*1.0  
+        y = (i - x)/x_size*1.0
+       
+	convolved_pixel = psf_array * source_map.data[x,y]
+	shifted_convolved_pixel = convolved_pixel[((psf_x_size-1)/2-x):((psf_x_size-1)/2-x+x_size-1), ((psf_y_size-1)/2 -y):((psf_y_size-1)/2-y+y_size-1)]
+       convolved_array = convolved_array + shifted_convolved_pixel
+
+    ENDFOR
+
+ENDELSE
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
