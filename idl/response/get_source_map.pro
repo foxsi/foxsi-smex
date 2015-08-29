@@ -31,9 +31,7 @@ DEFAULT, yc, 0
 source_array = DBLARR(150,150) ;,100) < energy dimension ; line_energy = 6/20*100.0
 
 ;;;; Warning: changing the above dimensions of source_array will significantly affect the code
-;;;; runtime. This must also match the dimensions of the psf array for the moment. This is an
-;;;; issue to be discussed.
-
+;;;; runtime. 
 
 x_size = N_ELEMENTS(REFORM(source_array[*,0]))*1.0
 y_size = N_ELEMENTS(REFORM(source_array[0,*]))*1.0
@@ -56,8 +54,14 @@ source_centre2 = [(x_size+1.0)/2.,(y_size+1.)/2.];[7*x_size/8,5*(y_size/8)]
 ;;; Create Sources from the above parameters
 
 source_1  = source1*psf_gaussian(npix = [x_size, y_size], $ 
+<<<<<<< HEAD
             ;/double, st_dev = [sigma_xs,sigma_ys],        $
             ;centroid = source_centre1 )
+=======
+            /double, st_dev = [sigma_xs,sigma_ys],        $
+            centroid = source_centre1 )
+
+>>>>>>> 864e6e4a5877c8a5f23abd2826fca634f5c7db7c
 
 source_2  = source2*psf_gaussian(npix = [x_size, y_size], $
             /double, st_dev = [sigma_xs,sigma_ys],        $
