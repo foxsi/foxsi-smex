@@ -13,6 +13,7 @@
 ;
 ; KEYWORDS :
 ;			plot - if true then plot to the screen
+;           position - the position in the field of view (default is [0,0] On-axis)
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV
@@ -22,11 +23,13 @@
 ; EXAMPLES : None
 ;
 
-FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot
+FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
+    POSITION = position
 
 	; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
-        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids
+        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
+        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
 
 	eff_area = foxsi_load_optics_effective_area()
 
