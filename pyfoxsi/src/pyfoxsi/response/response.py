@@ -21,9 +21,21 @@ __all__ = ['Response', 'Material']
 
 
 class Response(object):
-    """An object which provides the FOXSI telescope response"""
+    """An object which provides the FOXSI telescope response
 
-    def __init__(self):
+    Parameters
+    ----------
+    shutter_state : int
+        A number representing the state of the shutter (0 - no shutter, 1
+        - thin shutter, 2 - thick shutter)
+
+    Examples
+    --------
+    >>> from pyfoxsi.response import Response
+    >>> resp = Response()
+    >>> resp1 = Response(shutter_state=1)
+    """
+    def __init__(self, shutter_state=0):
         path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):
             path = os.path.dirname(path)
@@ -39,9 +51,14 @@ class Response(object):
         for missing_shell in missing_shells:
             self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
         # now add the effective area of all of the shells together
-        self.effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
+        self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
+        self.effective_area = self.optics_effective_area
         self.number_of_telescopes = pyfoxsi.number_of_telescopes
-        self.optical_path = []
+        self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
+                                Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
+        if shutter_state > 0:
+            self.__optical_path.append(Material('be', pyfoxsi.shutters_thickness[shutter_state]))
+        self._add_optical_path_to_effective_area()
 
     def plot(self):
         ax = self.effective_area.plot()
@@ -64,9 +81,18 @@ class Response(object):
 
     @optical_path.setter
     def optical_path(self, x):
-        self.effective_area['total'] = self.effective_area['total'] / self.__number_of_telescopes * x
-        self.__number_of_telescopes = x
+        raise Exception('Not implemented')
 
+    def _add_optical_path_to_effective_area(self):
+        """Add the effect of the optical path to the effective area"""
+        energies = self.optics_effective_area.index
+        for material in self.optical_path:
+            effective_area = self.optics_effective_area.values
+            if material.name == pyfoxsi.detector_material:
+                effective_area = effective_area * material.absorption(energies)
+            else:
+                effective_area = effective_area * material.transmission(energies)
+        self.effective_area.values = effective_area
 
 class Material(object):
     """An object which provides the optical properties of a material in x-rays
@@ -87,7 +113,7 @@ class Material(object):
     """
 
     def __init__(self, material, thickness):
-        self.material = material
+        self.name = material
         self.thickness = thickness
 
         path = os.path.dirname(pyfoxsi.__file__)
@@ -98,7 +124,7 @@ class Material(object):
         data_file = os.path.join(path, filename)
 
         h = h5py.File(data_file, 'r')
-        data = h[self.material]
+        data = h[self.name]
         self._source_data = data
 
         self.density = u.Quantity(self._source_data.attrs['density'], self._source_data.attrs['density unit'])
@@ -110,7 +136,7 @@ class Material(object):
 
     def __repr__(self):
         """Returns a human-readable representation."""
-        return '<Material ' + str(self.material) + ' ' + str(self.thickness) + '>'
+        return '<Material ' + str(self.name) + ' ' + str(self.thickness) + '>'
 
     def transmission(self, energy):
     	"""Provide the transmission fraction (0 to 1).
@@ -141,5 +167,5 @@ class Material(object):
         plt.plot(energies, self.absorption(energies), label='Absorption')
         plt.ylim(0, 1.2)
         plt.legend()
-        plt.title(self.material + ' ' + str(self.thickness))
+        plt.title(self.name + ' ' + str(self.thickness))
         plt.xlabel('Energy [keV]')
