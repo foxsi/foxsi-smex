@@ -116,9 +116,9 @@ FOR i = 0.0, N_ELEMENTS(source_map.data)-1 DO BEGIN
         ENDELSE
 
         IF y_size/2 - y GT 0 THEN BEGIN
-           shifted_convolved_pixel[psf_y_size-(y_size/2 - y):*,0:*] = 0
+           shifted_convolved_pixel[0:*,psf_y_size-(y_size/2 - y):*] = 0
         ENDIF ELSE BEGIN
-           shifted_convolved_pixel[0:y-y_size/2-1,0:*] = 0
+           shifted_convolved_pixel[0:*,0:y-y_size/2-1] = 0
         ENDELSE
 
        shifted_convolved_pixel = shifted_convolved_pixel[(psf_x_size-x_size)/2:(psf_x_size+x_size)/2-1, (psf_x_size-x_size)/2:(psf_y_size+y_size)/2-1]
