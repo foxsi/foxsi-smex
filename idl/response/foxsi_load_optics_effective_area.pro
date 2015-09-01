@@ -1,5 +1,5 @@
 ;+
-; NAME : foxsi_load_optics_effarea
+; NAME : foxsi_load_optics_effective_area
 ;
 ; PURPOSE : Load the optics effective area file.
 ;
