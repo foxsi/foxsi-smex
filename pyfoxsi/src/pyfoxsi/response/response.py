@@ -15,7 +15,7 @@ import astropy.units as u
 
 import pyfoxsi
 
-__all__ = [Response']
+__all__ = ['Response']
 
 
 class Response(object):
