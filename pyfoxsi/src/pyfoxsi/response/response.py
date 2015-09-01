@@ -54,17 +54,21 @@ class Response(object):
         self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
         self.effective_area = self.optics_effective_area
         self.number_of_telescopes = pyfoxsi.number_of_telescopes
-        self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
-                                Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
+        self._set_default_optical_path()
         if shutter_state > 0:
             self.__optical_path.append(Material('be', pyfoxsi.shutters_thickness[shutter_state]))
-        self._add_optical_path_to_effective_area()
+        self.__shutter_state = shutter_state
 
     def plot(self):
         ax = self.effective_area.plot()
-        ax.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x')
-        ax.set_ylabel('Effective area [$cm^2$]')
+        ax.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x ' + 'Shutter State ' + str(self.shutter_state))
+        ax.set_ylabel('Effective area [cm$^2$]')
         ax.set_xlabel('Energy [keV]')
+
+    def _set_default_optical_path(self):
+        self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
+                            Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
+        self._add_optical_path_to_effective_area()
 
     @property
     def number_of_telescopes(self):
@@ -81,18 +85,32 @@ class Response(object):
 
     @optical_path.setter
     def optical_path(self, x):
-        raise Exception('Not implemented')
+        self.optical_path = x
+        self._add_optical_path_to_effective_area()
+
+    @property
+    def shutter_state(self):
+        return self.__shutter_state
+
+    @shutter_state.setter
+    def shutter_state(self, x):
+        raise AttributeError('Cannot change shutter state. Create new object with desired shutter state')
 
     def _add_optical_path_to_effective_area(self):
         """Add the effect of the optical path to the effective area"""
-        energies = self.optics_effective_area.index
+        energies = np.array(self.optics_effective_area.index)
+        factor = np.ones(energies.shape)
         for material in self.optical_path:
-            effective_area = self.optics_effective_area.values
+            #effective_area = self.optics_effective_area.values
             if material.name == pyfoxsi.detector_material:
-                effective_area = effective_area * material.absorption(energies)
+                factor *= factor * material.absorption(energies)
             else:
-                effective_area = effective_area * material.transmission(energies)
-        self.effective_area.values = effective_area
+                factor *= factor * material.transmission(energies)
+        print(self.effective_area['module'].values)
+        self.effective_area['factor'] = factor
+        self.optics_effective_area['total'] *= factor
+        self.optics_effective_area['module'] *= factor
+#        self.effective_area.values = effective_area
 
 class Material(object):
     """An object which provides the optical properties of a material in x-rays

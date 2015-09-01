@@ -6,3 +6,8 @@ resp = Response()
 
 resp.plot()
 plt.show()
+
+resp = Response(shutter_state=1)
+
+resp.plot()
+plt.show()
