@@ -106,7 +106,6 @@ class Response(object):
                 factor *= factor * material.absorption(energies)
             else:
                 factor *= factor * material.transmission(energies)
-        print(self.effective_area['module'].values)
         self.effective_area['factor'] = factor
         self.optics_effective_area['total'] *= factor
         self.optics_effective_area['module'] *= factor
