@@ -52,7 +52,7 @@ class Response(object):
             self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
         # now add the effective area of all of the shells together
         self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
-        self.effective_area = self.optics_effective_area
+        self.effective_area = self.optics_effective_area.copy()
         self.number_of_telescopes = pyfoxsi.number_of_telescopes
         self._set_default_optical_path()
         if shutter_state > 0:
@@ -107,9 +107,8 @@ class Response(object):
             else:
                 factor *= factor * material.transmission(energies)
         self.effective_area['factor'] = factor
-        self.optics_effective_area['total'] *= factor
-        self.optics_effective_area['module'] *= factor
-#        self.effective_area.values = effective_area
+        self.effective_area['total'] = factor * self.optics_effective_area['total']
+        self.effective_area['module'] = factor * self.optics_effective_area['module']
 
 class Material(object):
     """An object which provides the optical properties of a material in x-rays
