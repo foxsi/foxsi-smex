@@ -1,4 +1,4 @@
 PyFOXSI Response
 ================
 
-.. automodapi:: pyfoxsi.response
+.. autoclass:: pyfoxsi.response.Response
