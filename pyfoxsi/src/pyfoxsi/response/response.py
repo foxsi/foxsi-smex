@@ -76,7 +76,7 @@ class Response(object):
 
     @number_of_telescopes.setter
     def number_of_telescopes(self, x):
-        self.effective_area['total'] = self.effective_area['total'] / self.__number_of_telescopes * x
+        self.optics_effective_area['total'] = self.optics_effective_area['total'] / self.__number_of_telescopes * x
         self.__number_of_telescopes = x
 
     @property
