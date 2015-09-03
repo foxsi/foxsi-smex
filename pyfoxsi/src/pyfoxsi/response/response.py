@@ -56,7 +56,7 @@ class Response(object):
         self.number_of_telescopes = pyfoxsi.number_of_telescopes
         self._set_default_optical_path()
         if shutter_state > 0:
-            self.__optical_path.append(Material('be', pyfoxsi.shutters_thickness[shutter_state]))
+            self.__optical_path.append(Material('al', pyfoxsi.shutters_thickness[shutter_state]))
         self.__shutter_state = shutter_state
 
     def plot(self):
