@@ -59,8 +59,11 @@ class Response(object):
             self.__optical_path.append(Material('al', pyfoxsi.shutters_thickness[shutter_state]))
         self.__shutter_state = shutter_state
 
-    def plot(self):
-        ax = self.effective_area.plot()
+    def plot(self, axes=None):
+        """Plot the effective area"""
+        if axes is None:
+            axes = plt.gca()
+        ax = self.effective_area.plot(axes=axes)
         ax.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x ' + 'Shutter State ' + str(self.shutter_state))
         ax.set_ylabel('Effective area [cm$^2$]')
         ax.set_xlabel('Energy [keV]')
@@ -72,6 +75,7 @@ class Response(object):
 
     @property
     def number_of_telescopes(self):
+        """The total number of telescope modules"""
         return self.__number_of_telescopes
 
     @number_of_telescopes.setter
@@ -81,6 +85,7 @@ class Response(object):
 
     @property
     def optical_path(self):
+        """The materials in the optical path including the detector"""
         return self.__optical_path
 
     @optical_path.setter
@@ -90,6 +95,7 @@ class Response(object):
 
     @property
     def shutter_state(self):
+        """The shutter state, allowed values are 0, 1, 2"""
         return self.__shutter_state
 
     @shutter_state.setter
@@ -109,6 +115,7 @@ class Response(object):
         self.effective_area['factor'] = factor
         self.effective_area['total'] = factor * self.optics_effective_area['total']
         self.effective_area['module'] = factor * self.optics_effective_area['module']
+
 
 class Material(object):
     """An object which provides the optical properties of a material in x-rays
@@ -176,12 +183,13 @@ class Material(object):
         """
 	    return 1 - self.transmission(energy)
 
-    def plot(self):
-        f = plt.figure()
+    def plot(self, axes=None):
+        if axes is None:
+            axes = plt.gca()
         energies = np.arange(1, 60)
-        plt.plot(energies, self.transmission(energies), label='Transmission')
-        plt.plot(energies, self.absorption(energies), label='Absorption')
-        plt.ylim(0, 1.2)
-        plt.legend()
-        plt.title(self.name + ' ' + str(self.thickness))
-        plt.xlabel('Energy [keV]')
+        axes.plot(energies, self.transmission(energies), label='Transmission')
+        axes.plot(energies, self.absorption(energies), label='Absorption')
+        axes.set_ylim(0, 1.2)
+        axes.legend()
+        axes.set_title(self.name + ' ' + str(self.thickness))
+        axes.set_xlabel('Energy [keV]')
