@@ -16,6 +16,7 @@ import sys
 import os
 import shlex
 import warnings
+import matplotlib.sphinxext.plot_directive
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -38,6 +39,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
 ]
+
+extensions += [matplotlib.sphinxext.plot_directive.__name__]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
