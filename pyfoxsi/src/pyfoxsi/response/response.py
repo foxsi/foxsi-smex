@@ -63,10 +63,10 @@ class Response(object):
         """Plot the effective area"""
         if axes is None:
             axes = plt.gca()
-        ax = self.effective_area.plot(axes=axes)
-        ax.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x ' + 'Shutter State ' + str(self.shutter_state))
-        ax.set_ylabel('Effective area [cm$^2$]')
-        ax.set_xlabel('Energy [keV]')
+        a = self.effective_area.plot(axes=axes)
+        axes.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x ' + 'Shutter State ' + str(self.shutter_state))
+        axes.set_ylabel('Effective area [cm$^2$]')
+        axes.set_xlabel('Energy [keV]')
 
     def _set_default_optical_path(self):
         self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
