@@ -301,6 +301,8 @@ intersphinx_mapping = {
     'h5py': ('http://docs.h5py.org/en/latest/', None)
 }
 
+autodoc_default_flags = 'members, private-members, show-inheritance'
+
 try:
     import sphinx_rtd_theme
     html_theme = 'sphinx_rtd_theme'
