@@ -26,8 +26,7 @@ class Response(object):
     Parameters
     ----------
     shutter_state : int
-        A number representing the state of the shutter (0 - no shutter, 1
-        - thin shutter, 2 - thick shutter)
+        A number representing the state of the shutter (0 - no shutter, 1 - thin shutter, 2 - thick shutter)
 
     Examples
     --------
@@ -58,6 +57,7 @@ class Response(object):
         if shutter_state > 0:
             self.__optical_path.append(Material('al', pyfoxsi.shutters_thickness[shutter_state]))
         self.__shutter_state = shutter_state
+        self._add_optical_path_to_effective_area()
 
     def plot(self, axes=None):
         """Plot the effective area"""
@@ -71,7 +71,6 @@ class Response(object):
     def _set_default_optical_path(self):
         self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
                             Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
-        self._add_optical_path_to_effective_area()
 
     @property
     def number_of_telescopes(self):
@@ -106,9 +105,11 @@ class Response(object):
         """Add the effect of the optical path to the effective area"""
         energies = np.array(self.optics_effective_area.index)
         factor = np.ones(energies.shape)
+        # Apply all of the materials in the optical path to factor
         for material in self.optical_path:
-            #effective_area = self.optics_effective_area.values
+            print(material.name)
             if material.name == pyfoxsi.detector_material:
+                # if it is the detector than we want the absorption
                 factor *= factor * material.absorption(energies)
             else:
                 factor *= factor * material.transmission(energies)
