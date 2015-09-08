@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;FUNCTION:      "foxsi_get_source_map"         
+;;;FUNCTION:      "foxsi_get_default_source_map"         
 ;;;
 ;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
 ;;;                                                                                            
@@ -8,7 +8,7 @@
 ;;;               into the foxsi_get_2d_image.pro to see 
 ;;;               what it looks like on the detector.            
 ;;;                                                                                            
-;;;CALL SEQUENCE: source_map = foxsi_get_source_map()                                                
+;;;CALL SEQUENCE: source_map = foxsi_get_default_source_map()      
 ;;;                                                                                            
 ;;;KEYWORDS:      dx, dy - binsize of pixels in arcseconds 
 ;;;               xc, yc - centre of image in solar coordinates (arcseconds)
@@ -20,7 +20,7 @@
 ;;;               fraction of the FOV dimensions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_source_map, dx = dx, dy = dy, xc = xc, yc = yc
+FUNCTION foxsi_get_default_source_map, dx = dx, dy = dy, xc = xc, yc = yc
 
 
 ;;;;Define keyword defaults to 1 arcsecond per pixel and centre the image at the solar origin

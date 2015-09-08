@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;FUNCTION:      "foxsi_get_2d_image"
+;;;FUNCTION:      "foxsi_get_output_2d_image"
 ;;;
 ;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
 ;;;               Improved Convolution Method - 08/31/15 - Samuel Badman               
@@ -14,7 +14,7 @@
 ;;;               loss of resolution due to the finite strip size in the detectors.
 ;;; 
 ;;;
-;;;CALL SEQUENCE: rebinned_convolved_map = foxsi_get_2d_image()
+;;;CALL SEQUENCE: rebinned_convolved_map = foxsi_get_output_2d_image()
 ;;;
 ;;;
 ;;;KEYWORDS:      source_map = "source_map". User inputted source, if
@@ -34,16 +34,16 @@
 ;;;                detectable at low resolutions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_2d_image,source_map = source_map, px = pix_size
+FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size
 
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
 RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_get_source_map', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_get_default_source_map', /IS_FUNCTION
 
 ;;;; Define default source_map input in case of no user input
-DEFAULT, source_map, foxsi_get_source_map()
+DEFAULT, source_map, foxsi_get_default_source_map()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
 DEFAULT, pix_size, 3
@@ -51,8 +51,9 @@ DEFAULT, pix_size, 3
 x=0 ;; Redundant FOV coordinates required as arguments for get_psf_array
 y=0 ;; Will come into play when FOV coordinate dependence is introduced into psf
 
-x_size = N_ELEMENTS(REFORM(source_map.data[*,0]))*1.0  ;;; Get dimensions of FOV in pixels
-y_size = N_ELEMENTS(REFORM(source_map.data[0,*]))*1.0 
+dims   = SIZE(source_map.data, /DIM)
+x_size = dims[0]*1.0  ;;; Get dimensions of FOV in pixels
+y_size = dims[1]*1.0 
 
 print, strcompress('Source_Array_is_'+string(N_ELEMENTS(REFORM(source_map.data[*,0]))) $
        +'x'+string(N_ELEMENTS(REFORM(source_map.data[0,*])))+'_Pixels', /REMOVE_AL)
@@ -65,18 +66,19 @@ o_y_size =  y_size + 1 - (y_size MOD 2)
 
 odd_source_array = CONGRID(source_map.data,o_x_size,o_y_size) 
 
+odd_dims = SIZE(odd_source_array)
+
 ;;; Obtain psf assuming constant across FOV
 
 psf_array = foxsi_get_psf_array(source_map.xc,source_map.yc,source_map.dx      $
 ,source_map.dy,x,y,x_size=o_x_size,y_size=o_y_size) 
 
-psf_x_size = n_elements(reform(psf_array[*,0]))*1.0
-psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
+psf_dims   = SIZE(psf_array, /DIM)
+psf_x_size = psf_dims[0]*1.0
+psf_y_size = psf_dims[1]*1.0
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 ;;; 08/31 -Improved convolution method takes only the pixels in the psf which
 ;;; overlap with the convolved image for a given FOV pixel. 
 ;;; Eliminates need to shift whole array and therefore the problem
@@ -85,22 +87,24 @@ psf_y_size = n_elements(reform(psf_array[0,*]))*1.0
 
 convolved_array = DBLARR(o_x_size,o_y_size)
 
-FOR i = 0.0, N_ELEMENTS(odd_source_array)-1 DO BEGIN
+FOR y = 0, odd_dims[2]-1 DO BEGIN
+   FOR x = 0, odd_dims[1]-1 DO BEGIN
+     
+      
+      convolved_pixel         = psf_array * odd_source_array[x,y]
+     
 
-        x = (i MOD o_x_size)*1.0  
-        y = (i - x)/o_x_size*1.0
+      shifted_convolved_pixel = convolved_pixel[(psf_x_size/2-x):(psf_x_size/2-x+o_x_size-1),$
+                                (psf_y_size/2 - y):(psf_y_size/2 -y +o_y_size-1)]
+
+      convolved_array        = convolved_array + shifted_convolved_pixel
+
        
-	convolved_pixel = psf_array * odd_source_array[x,y]
+      ;;; Progress monitor - run time is still long for large (>150'x150') FOV sizes 
+      IF x eq 0 THEN print, STRCOMPRESS("Image_Row_"+string(FIX(y))+"_of_"    $
+                             +string(FIX(o_y_size-1))+"_completed", /REMOVE_AL)   
 
-	shifted_convolved_pixel = convolved_pixel[(psf_x_size/2-x):(psf_x_size/2-x+o_x_size $
-                                  -1), (psf_y_size/2 -y):(psf_y_size/2-y+o_y_size-1)]
-
-       convolved_array = convolved_array + shifted_convolved_pixel
-
-       ;;; Progress monitor - run time is still long for large (>150'x150') FOV sizes 
-       IF x EQ 0 THEN print, STRCOMPRESS("Image_Row_"+string(FIX(y))+"_of_"                 $
-                             +string(FIX(o_y_size-1))+"_completed", /REMOVE_AL)
-
+   ENDFOR
 ENDFOR
 
 

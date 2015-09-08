@@ -1,14 +1,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;FUNCTION:      "foxsi_get_source_map_spectrum"         
+;;;FUNCTION:      "foxsi_get_default_source_cube"         
 ;;;
 ;;;HISTORY:       Initial Commit - 08/31/15 - Samuel Badman
 ;;;                                                                                            
 ;;;DESCRIPTION:   Funtion which returns an array of structures
 ;;;               consisting of 2D maps with spectral information
 ;;;               appended as tags. Default spectrum for the routine 
-;;;               get_foxsi_spectral_image.pro          
+;;;               get_foxsi_image_cube.pro          
 ;;;                                                                                            
-;;;CALL SEQUENCE: source_map_spectrum = foxsi_get_source_map_spectrum()                      
+;;;CALL SEQUENCE: source_map_cube = foxsi_get_default_source_cube()                      
 ;;;                                                                                            
 ;;;KEYWORDS:      dx, dy - binsize of pixels in arcseconds 
 ;;;               xc, yc - centre of image in solar coordinates (arcseconds)
@@ -23,35 +23,38 @@
 ;;;               2 is attenuated  with a half width of ~20kev
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_source_map_spectrum, dx = dx, dy = dy, xc = xc, yc = yc
+FUNCTION foxsi_get_default_source_cube, dx = dx, dy = dy, xc = xc, yc = yc,   $
+                                                eb = number_of_energy_bins
 
-;;;;Define keyword defaults to 1 arcsecond per pixel and centre the image at the solar origin
+;;Define keyword defaults to 1 arcsecond per pixel and centre the image at the solar origin
 DEFAULT, dx, 1
 DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
+DEFAULT, eb, 31
 
-spectral_resolution = 2.0 ; keV per bin
-spectrum_lower_bound = 1.0
-spectrum_upper_bound = 60.0
-spectrum_dimension = (spectrum_upper_bound - spectrum_lower_bound)/spectral_resolution
-IF spectrum_upper_bound EQ spectrum_lower_bound THEN spectrum_dimension = 1
+lower_energy_bound = 1.0
+upper_energy_bound = 60.0
+
+energy_spacings   = FINDGEN(eb)*(upper_energy_bound - lower_energy_bound)/(eb-1) 
+lower_bound_array = energy_spacings[0:eb-2] + lower_energy_bound
+upper_bound_array = energy_spacings[1:*] + lower_energy_bound
 
 source_array = DBLARR(100,100)
+dims         = SIZE(source_array, /DIM)
+
 ;;;; Warning: changing the above dimensions of source_array will
 ;;;; significantly affect the code runtime.
 
 ;Make structure to act as a placeholder while making the source cube
+cube_creator = ADD_TAG(ADD_TAG(MAKE_MAP(source_array, dx=dx, dy=dy, xc = xc,      $
+               yc = yc, id = "Source Map"),0.0,'energy_bin_lower_bound_keV'),0.0,  $
+              'energy_bin_upper_bound_keV')
 
-cube_creator = ADD_TAG(ADD_TAG(ADD_TAG(ADD_TAG(MAKE_MAP(source_array, dx=dx, dy=dy,    $
-               xc = xc, yc = yc, id = "Source Map"), spectrum_lower_bound,'spec_min'), $
-               spectrum_upper_bound, 'spec_max'),spectral_resolution,'spec_res')       $
-               ,0.0, 'Energy')
+source_map_cube = REPLICATE(cube_creator, eb - 1 )
 
-source_map_spectrum = REPLICATE(cube_creator, spectrum_dimension+1)
-
-x_size = N_ELEMENTS(REFORM(source_array[*,0]))*1.0
-y_size = N_ELEMENTS(REFORM(source_array[0,*]))*1.0
+x_size = dims[0]*1.0
+y_size = dims[1]*1.0
 
 ;;;;;;;;;;;;;;;;;;;;;;; Get Source Cube  ;;;;;;;;;;;;;;;;;;;;;
 ;;; Define parameters of toy gaussian sources
@@ -66,36 +69,39 @@ source_centre2 = [7*x_size/8,5*(y_size/8)]
 ;;; Loop over spectral slices of the cube and assign each a spatial
 ;;; distribution of counts.
 
-FOR i = 0, spectrum_dimension DO BEGIN
+FOR i = 0, eb - 2 DO BEGIN
 
-source1 = 1000.0;*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
-source2 = 1000.0*exp(-1*i*ALOG(2)/10)
+   source1 = 1000.0;*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
+   source2 = 1000.0*exp(-1*i*ALOG(2)/10)
 
-;;; Create Sources from the above parameters
+   ;;; Create Sources from the above parameters
 
-source_1  = source1*psf_gaussian(npix = [x_size, y_size], $ 
-            /double, st_dev = [sigma_xs,sigma_ys],        $
-            centroid = source_centre1 )
+   source_1  = source1*psf_gaussian(npix = [x_size, y_size], $ 
+               /double, st_dev = [sigma_xs,sigma_ys],        $
+               centroid = source_centre1 )
 
 
-source_2  = source2*psf_gaussian(npix = [x_size, y_size], $
-            /double, st_dev = [sigma_xs,sigma_ys],        $
-            centroid = source_centre2)
+   source_2  = source2*psf_gaussian(npix = [x_size, y_size], $
+               /double, st_dev = [sigma_xs,sigma_ys],        $
+               centroid = source_centre2)
 
-;;; Add individual sources to get complete source array
+   ;;; Add individual sources to get complete source array
 
-source_array = source_1 + source_2
+   source_array = source_1 + source_2
 
-;;; Make map from the source array and user inputted keywords or their defaults and RETURN
-;;; Adding tags to the structure to keep track of min/max energy of
-;;; the cube and its resolution and also keep track of the energy of
-;;; the current slice.
+   ;;; Make map from the source array and user inputted keywords or their defaults and RETURN
+   ;;; Adding tags to the structure to keep track of min/max energy of
+   ;;; each spectral bin
 
-source_map_spectrum[i] = ADD_TAG(ADD_TAG(ADD_TAG(ADD_TAG(MAKE_MAP(source_array, dx=dx, dy=dy, xc = xc, yc = yc, id = "Source Map"), spectrum_lower_bound,'spec_min'),spectrum_upper_bound,'spec_max'),spectral_resolution,'spec_res'),spectrum_lower_bound + spectral_resolution*i, 'Energy')
+   source_map = MAKE_MAP(source_array, dx=dx, dy=dy, xc = xc, yc = yc, id = "Source Map")
+   source_map = ADD_TAG(source_map, lower_bound_array[i],'energy_bin_lower_bound_keV')
+   source_map = ADD_TAG(source_map, upper_bound_array[i],'energy_bin_upper_bound_keV')
+
+   source_map_cube[i] = source_map
 
 ENDFOR
 
-RETURN, source_map_spectrum
+RETURN, source_map_cube
 
 END
 
