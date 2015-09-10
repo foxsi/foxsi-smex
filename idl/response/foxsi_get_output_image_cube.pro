@@ -19,12 +19,10 @@
 ;;;               convolution, the new image is rebinned according to
 ;;;               the keyword px = pix_size (default = 3) to reflect
 ;;;               the loss of resolution due to the finite strip size
-;;;               in the detectors.The output is a structure with
-;;;               identical parameters to the input source with the
-;;;               above appended tags. This contains a processed
-;;;               (convolved and pixelised) image at each energy value
-;;;               of the source along with the relevant spectral information.
-;;; 
+;;;               in the detectors.The output is a structure
+;;;               containing  imaged maps at the inputted energy with
+;;;               appended tags specifying the energy bin range for
+;;;               each map. 
 ;;;
 ;;;CALL SEQUENCE: output_map_cube  = foxsi_get_output_image_cube()
 ;;;
@@ -34,11 +32,11 @@
 ;;;               generated from get_source_map_spectrum.pro
 ;;;               function
 ;;;               
-;;;               bin_min = 'The value of the lower bound of
+;;;               e_min = 'The value of the lower bound of
 ;;;                         the lowest energy bin in the user- 
 ;;;                         provided spectrum in keV'
 ;;;
-;;;               bin_max = 'The value of the upper bound of
+;;;               e_max = 'The value of the upper bound of
 ;;;                         the lowest energy bin in the user- 
 ;;;                         provided spectrum in keV'
 ;;;               
@@ -54,15 +52,15 @@
 ;;;               -spectrum must have the same bin width throughout
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum, bin_min =   $ 
-                                      bin_min, bin_max = bin_max, px =  pix_size
+FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum, e_min =   $ 
+                                      e_min, e_max = e_max, px =  pix_size
 
 IF N_ELEMENTS(source_map_spectrum) EQ 0 THEN PRINT, 'Using default source' ELSE BEGIN
 
-            IF N_ELEMENTS(bin_min) EQ 0 THEN PRINT, 'No spectrum minimum inputted,'   $
+            IF N_ELEMENTS(e_min) EQ 0 THEN PRINT, 'No spectrum minimum inputted,'   $
                                                        + ' using default (1 keV)'
 
-            IF N_ELEMENTS(bin_max) EQ 0 THEN PRINT, 'No spectrum maxmimum inputted,'   $
+            IF N_ELEMENTS(e_max) EQ 0 THEN PRINT, 'No spectrum maxmimum inputted,'   $
                                                        + ' using default (60 keV)'
 ENDELSE
 
@@ -71,23 +69,27 @@ ENDELSE
 RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
+
 
 ;;;If source_map_cube provided, create structure with spectral information
 ;;;for each slice. If no source_map_cube provided then use default.
+
+;;;;; Define default minimum energy and maximum energy as 1 keV and 60
+;;;;; keV respectively (i.e. utilise full range of effective area)
+DEFAULT, e_min, 1.0
+DEFAULT, e_max, 60.0
+
 IF KEYWORD_SET(source_map_spectrum) EQ 1 THEN BEGIN                                           
   
- source_map_spectrum = foxsi_make_source_structure( $
- source_map_spectrum, bin_min,bin_max) 
+ source_map_spectrum = foxsi_make_source_structure(source_map_spectrum, e_min,e_max) 
 
  ENDIF ELSE  source_map_spectrum = foxsi_get_default_source_cube()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
 DEFAULT, pix_size, 3
 
-;;;;; Define default minimum energy and maximum energy as 1 keV and 60
-;;;;; keV respectively (i.e. utilise full range of effective area)
-DEFAULT, bin_min, 1.0
-DEFAULT, bin_max, 60.0
+
 
 
 

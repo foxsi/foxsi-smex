@@ -18,7 +18,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-FUNCTION foxsi_make_source_structure, source_map_spectrum, bin_min, bin_max
+FUNCTION foxsi_make_source_structure, source_map_spectrum, e_min, e_max
 
 spec_size = N_ELEMENTS(source_map_spectrum.data[0,0,*])
 source_data_cube = source_map_spectrum
@@ -29,9 +29,9 @@ source_cube_creator = ADD_TAG(ADD_TAG(source_map_spectrum[0], 0.0,       $
 
 source_map_spectrum = REPLICATE(source_cube_creator, spec_size-1)
 
-energy_spacings   = FINDGEN(spec_size)*(bin_max - bin_min)/(spec_size-1) 
-lower_bound_array = energy_spacings[0:spec_size-2] + bin_min
-upper_bound_array = energy_spacings[1:*] + bin_min
+energy_spacings   = FINDGEN(spec_size)*(e_max - e_min)/(spec_size-1) 
+lower_bound_array = energy_spacings[0:spec_size-2] + e_min
+upper_bound_array = energy_spacings[1:*] + e_min
 
 FOR i = 0, spec_size - 2 DO BEGIN
 
