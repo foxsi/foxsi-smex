@@ -4,21 +4,30 @@
 ;;; HISTORY:        Initial Commit - 09/08/15 - Samuel Badman
 ;;;
 ;;; DESCRIPTION:    Takes user inputted source map cube and spectral
-;;;                 min and max and converts this to the required
+;;;                 information and converts this to the required
 ;;;                 structure for the function
 ;;;                 foxsi_get_output_image_cube.
+;;;                 Takes either a max and min energy value of the
+;;;                 whole energy range and interpolates evenly spaced
+;;;                 bin widths or takes an array of bin edges of
+;;;                 dimension: map_cube energy dim - 1 and labels the
+;;;                 cube with these.     
 ;;;
-;;; CALL SEQUENCE:  source_map_spectrum =                          $
-;;;                 foxsi_make_source_structure('input_map_cube',  $
-;;;                 'lower_energy_bound','upper energy bound')
+;;; CALL SEQUENCE:  source_map_spectrum = foxsi_make_source_structure('input_map_cube')
 ;;;
+;;; KEYWORDS:       e_min = 'lower energy bound of lowest energy bin'
+;;;                 e_max = 'upper energy bound of highest energy bin'
+;;;                 arr = 'array of energy bin boundaries'
+;;;
+;;; 
 ;;; COMMENTS:      lower and upper energy bounds are the lowest energy
 ;;;                value in the lowest energy bin and the highest energy in the
 ;;;                highest energy bin respectively
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-FUNCTION str_test, source_map_spectrum, e_min = e_min,e_max = e_max, arr = arr
+FUNCTION foxsi_make_source_structure, source_map_spectrum, e_min = e_min,  $
+                                      e_max = e_max, arr = arr
 
 
 spec_size = N_ELEMENTS(source_map_spectrum.data[0,0,*])

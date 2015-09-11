@@ -11,7 +11,7 @@
 ;;;               Each flux map is converted to counts through
 ;;;               multiplication by an effective area obtained from
 ;;;               foxsi_get_eff_area.pro as a function of the energy
-;;;               of the midpoint of flux maps energy range. 
+;;;               of the midpoint of each flux map's energy range. 
 ;;;               These count maps are then convolved with a point
 ;;;               spread function obtained through calling the
 ;;;               function get_psf_array with arguments specifying the
@@ -40,6 +40,8 @@
 ;;;                         the lowest energy bin in the user- 
 ;;;                         provided spectrum in keV'
 ;;;               
+;;;               bin_edges_array = 'Array of all the energy bin edges in the cube'
+;;;
 ;;;               px = "pixel size of detector" in arcseconds, default is 3
 ;;;
 ;;;
@@ -49,11 +51,17 @@
 ;;;               pixel, this takes ~0.5s per energy slice.
 ;;;               -For your source, note the effective area is not
 ;;;               defined below 1KeV or above ~60KeV. 
-;;;               -spectrum must have the same bin width throughout
+;;;               -The user must provide either a max and min energy
+;;;               value fo the whole cube if it has evenly spaced
+;;;               energy bins or an array specfying the bin edges in
+;;;               ascending order. This array must therefore be of
+;;;               dimension n + 1 where n is the number of energy
+;;;               slices in the image cube.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION test, source_map_spectrum = source_map_spectrum, e_min = e_min, e_max = e_max,$ 
-                                     px =  pix_size, bin_edges_array = bin_edges_array
+FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,    $
+                                      e_min = e_min, e_max = e_max, px =  pix_size, $
+                                      bin_edges_array = bin_edges_array
                                      
 
 upper_lower_bound_mode = 0
@@ -93,7 +101,7 @@ ENDELSE
 RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
-RESOLVE_ROUTINE, 'str_test', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
 
 
 ;;;If source_map_cube provided, create structure with spectral information
@@ -105,11 +113,12 @@ DEFAULT, e_min, 1.0
 DEFAULT, e_max, 60.0
 
 IF KEYWORD_SET(source_map_spectrum) EQ 1 THEN BEGIN
-   IF upper_lower_bound_mode EQ 1  THEN source_map_spectrum = str_test(source_map_spectrum, $
-                                                              e_min = e_min, e_max = e_max)
+   IF upper_lower_bound_mode EQ 1  THEN source_map_spectrum =                              $
+                                          foxsi_make_source_structure(source_map_spectrum, $
+                                          e_min = e_min, e_max = e_max)
 
-   IF array_mode EQ 1  THEN source_map_spectrum = str_test(source_map_spectrum, $
-                                                         arr = bin_edges_array )               
+   IF array_mode EQ 1  THEN source_map_spectrum =   $
+                 foxsi_make_source_structure(source_map_spectrum, arr = bin_edges_array)
 
 ENDIF ELSE  source_map_spectrum = foxsi_get_default_source_cube()
 
