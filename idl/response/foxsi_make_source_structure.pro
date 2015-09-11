@@ -4,20 +4,20 @@
 ;;; HISTORY: Initial Commit - 09/08/15 - Samuel Badman
 ;;;
 ;;; DESCRIPTION: Takes user inputted source map cube and spectral
-;;; min and max and converts this to the required
-;;; structure for the function
-;;; foxsi_get_output_image_cube.
+;;;              min and max and converts this to the required
+;;;              structure for the function
+;;;              foxsi_get_output_image_cube.
 ;;;
 ;;; CALL SEQUENCE: source_map_spectrum = $
-;;; foxsi_make_source_structure('input_map_cube', $
-;;; 'lower_energy_bound','upper energy bound')
+;;;                foxsi_make_source_structure('input_map_cube', $
+;;;                'lower_energy_bound','upper energy bound')
 ;;;
 ;;; COMMENTS: lower and upper energy bounds are the lowest energy
 ;;; value in the lowest energy bin and the highest energy in the
 ;;; highest energy bin respectively
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_make_source_structure, source_map_spectrum, bin_min, bin_max
+FUNCTION foxsi_make_source_structure, source_map_spectrum, e_min, e_max
 
 spec_size = N_ELEMENTS(source_map_spectrum.data[0,0,*])
 
@@ -29,11 +29,11 @@ source_cube_creator = ADD_TAG(ADD_TAG(source_map_spectrum[0], 0.0, $
 
 source_map_spectrum = REPLICATE(source_cube_creator, spec_size)
 
-energy_spacings = FINDGEN(spec_size+1)*(bin_max - bin_min)/spec_size
+energy_spacings = FINDGEN(spec_size+1)*(e_max - e_min)/spec_size
 
-lower_bound_array = energy_spacings[0:spec_size-1] + bin_min
+lower_bound_array = energy_spacings[0:spec_size-1] + e_min
 
-upper_bound_array = energy_spacings[1:*] + bin_min
+upper_bound_array = energy_spacings[1:*] + e_min
 
 FOR i = 0, spec_size - 1 DO BEGIN
 
