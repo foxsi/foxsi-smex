@@ -52,16 +52,40 @@
 ;;;               -spectrum must have the same bin width throughout
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum, e_min =   $ 
-                                      e_min, e_max = e_max, px =  pix_size
+FUNCTION test, source_map_spectrum = source_map_spectrum, e_min = e_min, e_max = e_max,$ 
+                                     px =  pix_size, bin_edges_array = bin_edges_array
+                                     
+
+upper_lower_bound_mode = 0
+array_mode = 0
+
+;;; Logic to check the user input is in the correct format
 
 IF N_ELEMENTS(source_map_spectrum) EQ 0 THEN PRINT, 'Using default source' ELSE BEGIN
+  
+   IF N_ELEMENTS(bin_edges_array) EQ 0 THEN BEGIN
+            
+            upper_lower_bound_mode = 1
 
-            IF N_ELEMENTS(e_min) EQ 0 THEN PRINT, 'No spectrum minimum inputted,'   $
-                                                       + ' using default (1 keV)'
+            PRINT, 'No user supplied bin energy bound arrays detected,' $
+                   +' presuming evenly spaced energy bins...'            
 
-            IF N_ELEMENTS(e_max) EQ 0 THEN PRINT, 'No spectrum maxmimum inputted,'   $
-                                                       + ' using default (60 keV)'
+            IF N_ELEMENTS(e_min) EQ 0 && N_ELEMENTS(e_max) EQ 0 THEN BEGIN
+               
+               PRINT, 'No energy axis upper and lower bounds detected,' $
+                      +' using defaults (e_min = 1keV, e_max = 60keV)'
+
+            ENDIF ELSE IF N_ELEMENTS(e_min) EQ 0 OR N_ELEMENTS(e_max) EQ 0 THEN BEGIN
+
+                          PRINT, 'One of the energy bounds is missing,' $
+                                 +'please try again with both supplied'
+
+                          STOP
+
+                       ENDIF
+                    
+    ENDIF ELSE array_mode = 1
+ 
 ENDELSE
 
 
@@ -69,7 +93,7 @@ ENDELSE
 RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
+RESOLVE_ROUTINE, 'str_test', /IS_FUNCTION
 
 
 ;;;If source_map_cube provided, create structure with spectral information
@@ -80,19 +104,17 @@ RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
 DEFAULT, e_min, 1.0
 DEFAULT, e_max, 60.0
 
-IF KEYWORD_SET(source_map_spectrum) EQ 1 THEN BEGIN                                           
-  
- source_map_spectrum = foxsi_make_source_structure(source_map_spectrum, e_min,e_max) 
+IF KEYWORD_SET(source_map_spectrum) EQ 1 THEN BEGIN
+   IF upper_lower_bound_mode EQ 1  THEN source_map_spectrum = str_test(source_map_spectrum, $
+                                                              e_min = e_min, e_max = e_max)
 
- ENDIF ELSE  source_map_spectrum = foxsi_get_default_source_cube()
+   IF array_mode EQ 1  THEN source_map_spectrum = str_test(source_map_spectrum, $
+                                                         arr = bin_edges_array )               
+
+ENDIF ELSE  source_map_spectrum = foxsi_get_default_source_cube()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
 DEFAULT, pix_size, 3
-
-
-
-
-
 
 ;;;; Pull spectral information from input source structure array.
 
@@ -101,7 +123,7 @@ upper_array = source_map_spectrum.energy_bin_upper_bound_keV
 lower_array = source_map_spectrum.energy_bin_lower_bound_keV
 spec_res    = upper_array[0] - lower_array[0]
 
-print, "Spectral Resolution (KeV/Energy_Bin) ="+string(spec_res)
+print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
 
 ;; Redundant FOV coordinates required as arguments for get_psf_array
 x=0 
