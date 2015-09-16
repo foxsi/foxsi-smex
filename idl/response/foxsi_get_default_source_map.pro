@@ -1,13 +1,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;FUNCTION:      "get_source_map"         
+;;;FUNCTION:      "foxsi_get_default_source_map"         
 ;;;
 ;;;HISTORY:       Initial Commit - 08/19/15 - Samuel Badman
 ;;;                                                                                            
-;;;DESCRIPTION:   Funtion which returns a toy example of a source map which can be fed into
-;;;               the get_foxsi_image programme to see what it looks like on the 
-;;;               detector            
+;;;DESCRIPTION:   Funtion which returns a toy example of a
+;;;               monochromatic source map which can be fed
+;;;               into the foxsi_get_2d_image.pro to see 
+;;;               what it looks like on the detector.            
 ;;;                                                                                            
-;;;CALL SEQUENCE: source_map = get_source_map()                                                
+;;;CALL SEQUENCE: source_map = foxsi_get_default_source_map()      
 ;;;                                                                                            
 ;;;KEYWORDS:      dx, dy - binsize of pixels in arcseconds 
 ;;;               xc, yc - centre of image in solar coordinates (arcseconds)
@@ -15,11 +16,11 @@
 ;;;                                                                                            
 ;;;COMMENTS:      Currently returns an array with 2 Gaussian sources, each of FWHM 1/20 * FOV
 ;;;               size and each with a peak count rate of 100. Source 1 is centred about
-;;;               [0.375,0.625], Source 2 is centred about [0.875,0.625] expressed as a
+;;;               [0.375,0.625], Source 2 is centred about [0.5,0.5] expressed as a
 ;;;               fraction of the FOV dimensions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION get_source_map, dx = dx, dy = dy, xc = xc, yc = yc
+FUNCTION foxsi_get_default_source_map, dx = dx, dy = dy, xc = xc, yc = yc
 
 
 ;;;;Define keyword defaults to 1 arcsecond per pixel and centre the image at the solar origin
@@ -28,7 +29,7 @@ DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
 
-source_array = DBLARR(150,150) ;,100) < energy dimension ; line_energy = 6/20*100.0
+source_array = DBLARR(150,150)
 
 ;;;; Warning: changing the above dimensions of source_array will significantly affect the code
 ;;;; runtime. 
@@ -45,20 +46,20 @@ FWHM_ys = y_size/20
 sigma_xs = FWHM_xs/(sqrt(2.0*ALOG(2)))   ;;Standard deviations are calculated from FWHM
 sigma_ys = FWHM_ys/(sqrt(2.0*ALOG(2)))
 
-source1 = 100.0 ; Peak Counts
-source2 = 100.0
+source1 = 1000.0 ; Peak Counts
+source2 = 1000.0
 
 source_centre1 = [1.5*x_size/4,2.5*(y_size/4) ] ; Source centre coordinates
-source_centre2 = [7*x_size/8,5*(y_size/8)]
+source_centre2 = [(x_size+1.0)/2.0,(y_size+1.0)/2.0]
 
 ;;; Create Sources from the above parameters
 
-source_1  = source1*psf_gaussian(npix = [x_size, y_size], $ 
+source_1  = source1*PSF_GAUSSIAN(npix = [x_size, y_size], $ 
             /double, st_dev = [sigma_xs,sigma_ys],        $
             centroid = source_centre1 )
 
 
-source_2  = source2*psf_gaussian(npix = [x_size, y_size], $
+source_2  = source2*PSF_GAUSSIAN(npix = [x_size, y_size], $
             /double, st_dev = [sigma_xs,sigma_ys],        $
             centroid = source_centre2)
 
