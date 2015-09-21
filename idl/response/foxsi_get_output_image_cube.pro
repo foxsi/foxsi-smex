@@ -19,7 +19,11 @@
 ;;;               convolution, the new image is rebinned according to
 ;;;               the keyword px = pix_size (default = 3) to reflect
 ;;;               the loss of resolution due to the finite strip size
-;;;               in the detectors.The output is a structure
+;;;               in the detectors. Finally, counting statistics based
+;;;               is accounted for by randomising each pixel's
+;;;               value with a poisson distribution with a mean given
+;;;               by the pixel's original value.
+;;;               The output is a structure
 ;;;               containing  imaged maps at the inputted energy with
 ;;;               appended tags specifying the energy bin range for
 ;;;               each map. 
@@ -427,6 +431,21 @@ FOR rebin_layer = 0.0, N_ELEMENTS(rebinned_convolved_cube[0,0,*])-1 DO BEGIN
     output_map_cube[rebin_layer] = rebinned_convolved_slice
 
 
+ ENDFOR
+
+output_dims = SIZE(output_map_cube.data, /DIM)
+
+;;;; Add noise due to counting statistics for each pixel ;;;;;
+FOR x = 0, output_dims[0] - 1 DO BEGIN
+   FOR y = 0, output_dims[1] - 1 DO BEGIN
+      FOR z = 0, output_dims[2] - 1 DO BEGIN
+          mean = output_map_cube[z].data[x,y]
+          IF mean NE 0.0 THEN BEGIN 
+                  noisy_value = RANDOMU(seed, 1, POISSON = mean)
+                  output_map_cube[z].data[x,y] = noisy_value
+               ENDIF         
+       ENDFOR
+   ENDFOR
 ENDFOR
 
 print,  'output_map_cube returned'
