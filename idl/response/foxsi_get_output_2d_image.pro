@@ -145,6 +145,20 @@ rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = 
                          xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS(          $
                          'Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL))
 
+output_dims = SIZE(rebinned_convolved_map.data,/DIM)
+
+;;;; Add noise due to counting statistics for each pixel ;;;;;
+FOR x = 0, output_dims[0] - 1 DO BEGIN
+   FOR y = 0, output_dims[1] - 1 DO BEGIN
+          mean = rebinned_convolved_map.data[x,y]
+          IF mean NE 0.0 THEN BEGIN 
+                  noisy_value = RANDOMU(seed, 1, POISSON = mean)
+                  rebinned_convolved_map.data[x,y] = noisy_value
+               ENDIF         
+      
+   ENDFOR
+ENDFOR
+
 print,  'rebinned_convolved_map returned'
 
 RETURN, rebinned_convolved_map

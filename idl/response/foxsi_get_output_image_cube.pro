@@ -427,6 +427,21 @@ FOR rebin_layer = 0.0, N_ELEMENTS(rebinned_convolved_cube[0,0,*])-1 DO BEGIN
     output_map_cube[rebin_layer] = rebinned_convolved_slice
 
 
+ ENDFOR
+
+output_dims = SIZE(output_map_cube.data, /DIM)
+
+;;;; Add noise due to counting statistics for each pixel ;;;;;
+FOR x = 0, output_dims[0] - 1 DO BEGIN
+   FOR y = 0, output_dims[1] - 1 DO BEGIN
+      FOR z = 0, output_dims[2] - 1 DO BEGIN
+          mean = output_map_cube[z].data[x,y]
+          IF mean NE 0.0 THEN BEGIN 
+                  noisy_value = RANDOMU(seed, 1, POISSON = mean)
+                  output_map_cube[z].data[x,y] = noisy_value
+               ENDIF         
+       ENDFOR
+   ENDFOR
 ENDFOR
 
 print,  'output_map_cube returned'
