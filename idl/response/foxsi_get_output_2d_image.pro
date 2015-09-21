@@ -11,7 +11,12 @@
 ;;;               solar coordinates of the image sensor. After
 ;;;               convolution, the new image is rebinned according to
 ;;;               the keyword px = pix_size (default = 3) to reflect the
-;;;               loss of resolution due to the finite strip size in the detectors.
+;;;               loss of resolution due to the finite strip size in
+;;;               the detectors. Finally, counting statistics is
+;;;               accounted for via replacing each pixel's value with
+;;;               one randomly drawn from a poisson distribution
+;;;               with a mean given by that pixel's original value.
+;;;               
 ;;; 
 ;;;
 ;;;CALL SEQUENCE: rebinned_convolved_map = foxsi_get_output_2d_image()

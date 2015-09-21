@@ -19,7 +19,11 @@
 ;;;               convolution, the new image is rebinned according to
 ;;;               the keyword px = pix_size (default = 3) to reflect
 ;;;               the loss of resolution due to the finite strip size
-;;;               in the detectors.The output is a structure
+;;;               in the detectors. Finally, counting statistics based
+;;;               is accounted for by randomising each pixel's
+;;;               value with a poisson distribution with a mean given
+;;;               by the pixel's original value.
+;;;               The output is a structure
 ;;;               containing  imaged maps at the inputted energy with
 ;;;               appended tags specifying the energy bin range for
 ;;;               each map. 
