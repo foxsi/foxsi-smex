@@ -19,14 +19,13 @@
 ;;;               convolution, the new image is rebinned according to
 ;;;               the keyword px = pix_size (default = 3) to reflect
 ;;;               the loss of resolution due to the finite strip size
-;;;               in the detectors. Finally, counting statistics based
-;;;               is accounted for by randomising each pixel's
-;;;               value with a poisson distribution with a mean given
-;;;               by the pixel's original value.
-;;;               The output is a structure
-;;;               containing  imaged maps at the inputted energy with
-;;;               appended tags specifying the energy bin range for
-;;;               each map. 
+;;;               in the detectors. Finally, counting statistics are
+;;;               accounted for by randomising each pixel's
+;;;               value through random selection from  a poisson
+;;;               distribution about a mean given by the pixel's original value.
+;;;               The output is a structure containing imaged maps at
+;;;               the inputted energy with appended tags specifying
+;;;               the energy bin range for each map. 
 ;;;
 ;;;CALL SEQUENCE: output_map_cube  = foxsi_get_output_image_cube()
 ;;;
@@ -48,6 +47,7 @@
 ;;;
 ;;;               px = "pixel size of detector" in arcseconds, default is 3
 ;;;
+;;;               no_count_stats - if set, counting statistics ignored
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default spatial dimensions are set to 
@@ -65,8 +65,8 @@
 
 FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,    $
                                       e_min = e_min, e_max = e_max, px =  pix_size, $
-                                      bin_edges_array = bin_edges_array
-                                     
+                                      bin_edges_array = bin_edges_array,            $
+                                      no_count_stats = no_count_stats
 
 upper_lower_bound_mode = 0
 array_mode = 0
@@ -436,18 +436,20 @@ FOR rebin_layer = 0.0, N_ELEMENTS(rebinned_convolved_cube[0,0,*])-1 DO BEGIN
 output_dims = SIZE(output_map_cube.data, /DIM)
 
 ;;;; Add noise due to counting statistics for each pixel ;;;;;
-FOR x = 0, output_dims[0] - 1 DO BEGIN
-   FOR y = 0, output_dims[1] - 1 DO BEGIN
-      FOR z = 0, output_dims[2] - 1 DO BEGIN
+
+IF KEYWORD_SET(no_count_stats) NE 1 THEN BEGIN
+   FOR x = 0, output_dims[0] - 1 DO BEGIN
+      FOR y = 0, output_dims[1] - 1 DO BEGIN
+         FOR z = 0, output_dims[2] - 1 DO BEGIN
           mean = output_map_cube[z].data[x,y]
-          IF mean NE 0.0 THEN BEGIN 
+             IF mean NE 0.0 THEN BEGIN 
                   noisy_value = RANDOMU(seed, 1, POISSON = mean)
                   output_map_cube[z].data[x,y] = noisy_value
                ENDIF         
-       ENDFOR
+          ENDFOR
+      ENDFOR
    ENDFOR
-ENDFOR
-
+ENDIF
 print,  'output_map_cube returned'
 
 RETURN, output_map_cube

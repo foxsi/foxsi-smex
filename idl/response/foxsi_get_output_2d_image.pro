@@ -27,7 +27,9 @@
 ;;;               function
 ;;;
 ;;;               px = "pixel size of detector" in arcseconds, default is 3''
-;;;
+;;;               
+;;;               no_count_stats - if keyword set no counting stats
+;;;                                accounted for
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default source array is 
@@ -39,7 +41,7 @@
 ;;;                detectable at low resolutions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size
+FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_count_stats = no_count_stats
 
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
@@ -153,16 +155,18 @@ rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = 
 output_dims = SIZE(rebinned_convolved_map.data,/DIM)
 
 ;;;; Add noise due to counting statistics for each pixel ;;;;;
-FOR x = 0, output_dims[0] - 1 DO BEGIN
-   FOR y = 0, output_dims[1] - 1 DO BEGIN
+IF KEYWORD_SET(no_count_stats) NE 1 THEN BEGIN
+  FOR x = 0, output_dims[0] - 1 DO BEGIN
+     FOR y = 0, output_dims[1] - 1 DO BEGIN
           mean = rebinned_convolved_map.data[x,y]
           IF mean NE 0.0 THEN BEGIN 
                   noisy_value = RANDOMU(seed, 1, POISSON = mean)
                   rebinned_convolved_map.data[x,y] = noisy_value
                ENDIF         
       
-   ENDFOR
-ENDFOR
+     ENDFOR
+  ENDFOR
+ENDIF
 
 print,  'rebinned_convolved_map returned'
 
