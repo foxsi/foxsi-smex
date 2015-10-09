@@ -21,7 +21,9 @@ This function is intended to simulate the image measured by the FOXSI detectors 
 given input source image without spectral information.This must be a 2D monochromatic source.
 
 This involves modelling the convolution of the image due to the point spread function of
-the optics modules and the pixelisation of the detectors. The function may be run with an
+the optics modules and the pixelisation of the detectors followed by accounting for counting
+statistics by replacing each pixels value with a randomly selected value from a poisson 
+distribution with a mean set by the original value of that pixel. The function may be run with an
 automatically generated source (two narrow gaussians near the centre of a 150x150 FOV)
 and a default pixelisation of 3'' per pixel with the call:
 
@@ -67,7 +69,7 @@ foxsi_get_output_image_cube.pro                       (located in /response fold
 This function is intended to simulate the image measured by the FOXSI detectors for a
 given input source with spectral information.
 
-For each energy slice, all bins are multiplied by an effective area obtained from the function foxsi_get_effective_area and interpolated to match the energy value of the input source slice. This slice is then processed identically to the monochromatic case described above under foxsi_get_default_2d_image.pro.
+For each energy slice, each pixels flux (integrated in time) is multiplied by an effective area obtained from the function foxsi_get_effective_area and interpolated to match the energy value of the input source slice. This slice is then processed identically to the monochromatic case described above under foxsi_get_default_2d_image.pro.
 
 The function may be called with a default spectral cube and default pixelisation ( 3'' per pixel). 
 
