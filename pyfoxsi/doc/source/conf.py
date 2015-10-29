@@ -16,11 +16,12 @@ import sys
 import os
 import shlex
 import warnings
+import matplotlib.sphinxext.plot_directive
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../../"))
+sys.path.insert(0, os.path.abspath("../../src/"))
 # -- General configuration ------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -31,13 +32,17 @@ sys.path.insert(0, os.path.abspath("../../"))
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
+    'sphinx.ext.autosummary',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'numpydoc',
 ]
+
+extensions += [matplotlib.sphinxext.plot_directive.__name__]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -300,6 +305,8 @@ intersphinx_mapping = {
     'astropy': ('http://docs.astropy.org/en/stable/', None),
     'h5py': ('http://docs.h5py.org/en/latest/', None)
 }
+
+autodoc_default_flags = 'members, private-members, show-inheritance'
 
 try:
     import sphinx_rtd_theme

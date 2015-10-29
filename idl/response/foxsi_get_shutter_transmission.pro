@@ -38,7 +38,7 @@ FUNCTION foxsi_get_shutter_transmission, shutter_state, ENERGY_ARR = energy_arr,
     thick_mm = foxsi_shutters_thickness_mm[shutter_state]
 
     IF NOT keyword_set(energy_arr) THEN energy_arr = findgen(60)
-    result = foxsi_get_xray_transmission(energy_arr = energy_arr, thick_mm, 'be', plot=plot)
+    result = foxsi_get_xray_transmission(energy_arr = energy_arr, thick_mm, 'al', plot=plot)
     energy_keV = result.energy_keV
 
     RETURN, result
