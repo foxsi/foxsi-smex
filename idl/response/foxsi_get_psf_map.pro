@@ -35,40 +35,60 @@ END
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;FUNCTION:        "foxsi_get_psf_array"
+;;;FUNCTION:        "foxsi_get_psf_map"
 ;;;
 ;;;HISTORY:         Initial Commit - 08/19/15 - Samuel Badman
 ;;;                 Tweaked to accomodate new convolution method -
-;;;                 08/31/15 - Samuel Badman 
+;;;                 08/31/15 - Samuel Badman
+;;;                 Changed name to foxsi_get_psf_map, and added
+;;;                 PSF as a function of position - 11/02/15 - A. Inglis
 ;;;
 ;;;DESCRIPTION:     Function which generates a prescribed 2D point
 ;;;                 spread function with specified parameters. Takes arguments of the
 ;;;                 solar coordinates of the centre of the image (xc, yc), the size of the
 ;;;                 pixels (dx,dy) and the position in the source
-;;;                 image being convolved.Eventually these will be
-;;;                 used to change the parameters of the psf depending
-;;;                 on the source position and FOV position. 
+;;;                 image being convolved.
 ;;;
 ;;;CALL SEQUENCE:   psf_array = foxsi_get_psf_array(xc,yc,dx,dy,x,y)
 ;;;
-;;;COMMENTS:       Currently,the psf generated is that obtained by
-;;;                measuring the diffraction patterns of the FOXSI optics from an xray
-;;;                generator at an off-axis positon of 7' . The psf was roughly
-;;;                fitted as a sum of 3 gaussians with parameters indicated in the
-;;;                code below.
+;;;INPUTS:         xc - the x-centre of the PSF map in arcsec. Default
+;;;                     is 0.
+;;;                yc - the y-centre of the PSF map in arcsec. Default
+;;;                     is 0.
+;;;                dx, dy - the pixel size for the PSF map in
+;;;                         arcsec. Default is 0.5
+;;;                pitch - the pitch angle of the source location
+;;;                        relative to the imaging axis (arcsec).
+;;;                yaw - the yaw angle of the source location relative
+;;;                      to the imaging axis (arcsec).
+;;;
+;;;OPTIONAL INPUT: x_size - the number of pixels in the PSF map in the
+;;;                         x-dimension
+;;;                y_size - the number of pixels in the PSF map in the
+;;;                         y-dimension
+;;;
+;;;OUTPUTS:        psf_map - an SSW map of the PSF at the desired
+;;;                          pitch, yaw location.
+;;;
+;;;COMMENTS:       The PSF is now available as a function of
+;;;                position. To obtain this, the psf was roughly
+;;;                fitted as a sum of 3 gaussians over a range of
+;;;                positions, and each parameter was fit by a
+;;;                polynomial function. These fits are used by this routine.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, x, y,x_size=x_size, y_size=y_size,$
-                             offaxis_angle=offaxis_angle,theta=theta
+FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_size                          
  
   default,xc,0
   default,yc,0
   default,dx,0.5
   default,dy,0.5
-  default,offaxis_angle,0
-  default,theta,0
   default,x_size,100
   default,y_size,100
+  
+  ; calculate offaxis angle and theta from pitch and yaw
+  offaxis_angle = sqrt(pitch^2 + yaw^2) / 60. ; convert to arcminutes
+  polar_angle = atan(yaw, pitch) ; angle in radians
   
  ;read FOXSI PSF parameter fit values from file
   variable_fit_params = READ_ASCII('psf_parameters.txt')
@@ -112,25 +132,25 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, x, y,x_size=x_size, y_size=y_size,$
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
 ;;;;;;;;;;;;;;;;;;;;;;;;;gaussian fits
 
-  theta_rad = theta*!const.DtoR
-  ;construct the 3-gaussian FOXSI PSF for a given offaxis angle and theta
-  g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, theta_rad)
-  g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, theta_rad)
-  g3 = gauss2d(x, y, amp3, xc, yc, width_x3, width_y3, theta_rad)
+  ;construct the 3-gaussian FOXSI PSF for a given offaxis angle and polar angle
+  g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, polar_angle)
+  g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, polar_angle)
+  g3 = gauss2d(x, y, amp3, xc, yc, width_x3, width_y3, polar_angle)
 
   ;; Normalise total PSF so that total of psf_array EQ 1
   psf = (g1 + g2 + g3) / total(g1+g2+g3)
 
-  psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', theta = theta, offaxis_angle=offaxis_angle)
+  ;make the PSF as an SSW map
+  psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', polar_angle = polar_angle*!radeg, offaxis_angle=offaxis_angle)
 
-
+ ;??? not sure what this does
 psf_centre1 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]  ;;PSF centered
 psf_centre2 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
 psf_centre3 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
 
 
 ;; Return PSF map
-print, 'Returned psf_array'
+print, 'Returned psf map'
 RETURN, psf_map
 
 END
