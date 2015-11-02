@@ -102,7 +102,7 @@ ENDELSE
 
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
-RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_get_psf_map', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
@@ -161,11 +161,12 @@ odd_source_cube = CONGRID(source_map_spectrum.data,o_x_size,o_y_size,spec_size)
 
 ;;; Obtain psf assuming constant across FOV
 
-psf_array = foxsi_get_psf_array(source_map_spectrum[0].xc,source_map_spectrum[0].yc, $
+psf_map = foxsi_get_psf_map(source_map_spectrum[0].xc,source_map_spectrum[0].yc, $
             source_map_spectrum[0].dx, source_map_spectrum[0].dy, x, y,        $
             x_size = o_x_size, y_size = o_y_size) 
 
-psf_dims   = SIZE(psf_array,/DIM)
+psf_array = psf_map.data
+psf_dims   = SIZE(psf_map.data,/DIM)
 psf_x_size = psf_dims[0]*1.0
 psf_y_size = psf_dims[1]*1.0
 
@@ -331,7 +332,8 @@ array_dims        = SIZE(attenuated_source, /DIM)
 
 FOR j = 0.0, N_ELEMENTS(attenuated_source[0,0,*])-1 DO BEGIN
 
-convolved_array = DBLARR(o_x_size,o_y_size)
+   convolved_array = DBLARR(o_x_size,o_y_size)
+   
 
 PRINT, STRCOMPRESS('Convolving_spectral_slice_'+STRING(FIX(j+1))+       $
        '_of_'+STRING(spec_size),/REMOVE_AL)

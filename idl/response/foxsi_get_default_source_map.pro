@@ -29,7 +29,7 @@ DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
 
-source_array = DBLARR(150,150)
+source_array = DBLARR(500,500)
 
 ;;;; Warning: changing the above dimensions of source_array will significantly affect the code
 ;;;; runtime. 

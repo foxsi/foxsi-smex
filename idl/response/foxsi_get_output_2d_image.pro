@@ -46,7 +46,7 @@ FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_co
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
-RESOLVE_ROUTINE, 'foxsi_get_psf_array', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_get_psf_map', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_map', /IS_FUNCTION
 
 ;;;; Define default source_map input in case of no user input
@@ -77,8 +77,13 @@ odd_dims = SIZE(odd_source_array)
 
 ;;; Obtain psf assuming constant across FOV
 
-psf_array = foxsi_get_psf_array(source_map.xc,source_map.yc,source_map.dx      $
+;psf_array = foxsi_get_psf_array(source_map.xc,source_map.yc,source_map.dx      $
+;,source_map.dy,x,y,x_size=o_x_size,y_size=o_y_size)
+
+psf_map = foxsi_get_psf_map(source_map.xc,source_map.yc,source_map.dx      $
 ,source_map.dy,x,y,x_size=o_x_size,y_size=o_y_size) 
+
+psf_array = psf_map.data
 
 psf_dims   = SIZE(psf_array, /DIM)
 psf_x_size = psf_dims[0]*1.0
