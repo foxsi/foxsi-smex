@@ -141,7 +141,8 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   psf = (g1 + g2 + g3) / total(g1+g2+g3)
 
   ;make the PSF as an SSW map
-  psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', polar_angle = polar_angle*!radeg, offaxis_angle=offaxis_angle)
+  psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', polar_angle = polar_angle*!radeg,$
+                     offaxis_angle=offaxis_angle, offaxis_angle_units = 'arcmin', polar_angle_units = 'deg')
 
  ;??? not sure what this does
 psf_centre1 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]  ;;PSF centered
