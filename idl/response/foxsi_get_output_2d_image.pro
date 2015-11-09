@@ -53,10 +53,10 @@ RESOLVE_ROUTINE, 'foxsi_get_default_source_map', /IS_FUNCTION
 DEFAULT, source_map, foxsi_get_default_source_map()
 
 ;;;;; Define default detector resolution to 3 arcsecs per pixel
-DEFAULT, pix_size, 3
+DEFAULT, pix_size, 3.0
 
-x=0 ;; Redundant FOV coordinates required as arguments for get_psf_array
-y=0 ;; Will come into play when FOV coordinate dependence is introduced into psf
+x=0.0 ;; Redundant FOV coordinates required as arguments for get_psf_array
+y=0.0 ;; Will come into play when FOV coordinate dependence is introduced into psf
 
 dims   = SIZE(source_map.data, /DIM)
 x_size = dims[0]*1.0  ;;; Get dimensions of FOV in pixels
