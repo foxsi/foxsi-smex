@@ -77,8 +77,8 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   default,yc,0
   default,dx,0.5
   default,dy,0.5
-  default,x_size,100
-  default,y_size,100
+  default,x_size,101
+  default,y_size,101
   
   ; calculate offaxis angle and theta from pitch and yaw
   offaxis_angle = sqrt(pitch^2 + yaw^2) / 60. ; convert to arcminutes
@@ -109,15 +109,12 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   width_x3 = poly(offaxis_angle,poly_width_x3)
   width_y3 = poly(offaxis_angle,poly_width_y3)
 
-  
-;;08/31 - Made psf_scale_factor always 2 so full image always convolved
-  psf_scale_factor = 2
 
 ;;;08/31 - Make sure dimensions of psf_array are odd to be able to
 ;;;        precisely line up pixels during convolution.
 ;;;
-  psf_x_size = 1.0*(psf_scale_factor*x_size +1 - (psf_scale_factor*x_size MOD 2))
-  psf_y_size = 1.0*(psf_scale_factor*y_size +1 - (psf_scale_factor*y_size MOD 2))
+  psf_x_size = 2 * (long(x_size) / 2) + 1
+  psf_y_size = 2 * (long(y_size) / 2) + 1
 
   x = (findgen(psf_x_size) * dx) - ( (psf_x_size*dx / 2.)) + xc
   y = (findgen(psf_y_size) * dy) - ( (psf_y_size*dy / 2.)) + yc
