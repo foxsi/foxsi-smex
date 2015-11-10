@@ -1,9 +1,3 @@
-FUNCTION polynomial, angle, a, b, c
-  result = (a*angle^2) + (b*angle) + c
-  RETURN,result
-END
-
-
 FUNCTION gauss2d,x,y, amp, cen_x, cen_y, sigma_x, sigma_y, theta
   ; a 2d-gaussian that includes a rotation angle theta
   ; PARAMETERS:
@@ -93,27 +87,26 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
  ;read FOXSI PSF parameter fit values from file
   variable_fit_params = READ_ASCII('psf_parameters.txt')
   
-  poly_amp1 = variable_fit_params.field1[*,0]
-  poly_amp2 = variable_fit_params.field1[*,1]
-  poly_amp3 = variable_fit_params.field1[*,2]
-  poly_width_x1 = variable_fit_params.field1[*,3]
-  poly_width_x2 = variable_fit_params.field1[*,5]
-  poly_width_x3 = variable_fit_params.field1[*,7]
-  poly_width_y1 = variable_fit_params.field1[*,4]
-  poly_width_y2 = variable_fit_params.field1[*,6]
-  poly_width_y3 = variable_fit_params.field1[*,8]
-
+  poly_amp1 = reverse(variable_fit_params.field1[*,0])
+  poly_amp2 = reverse(variable_fit_params.field1[*,1])
+  poly_amp3 = reverse(variable_fit_params.field1[*,2])
+  poly_width_x1 = reverse(variable_fit_params.field1[*,3])
+  poly_width_x2 = reverse(variable_fit_params.field1[*,4])
+  poly_width_x3 = reverse(variable_fit_params.field1[*,5])
+  poly_width_y1 = reverse(variable_fit_params.field1[*,6])
+  poly_width_y2 = reverse(variable_fit_params.field1[*,7])
+  poly_width_y3 = reverse(variable_fit_params.field1[*,8])
 
   ;reconstruct the fit functions for each parameter of the FOXSI PSF
-  amp1 = polynomial(offaxis_angle,poly_amp1[0],poly_amp1[1],poly_amp1[2])
-  amp2 = polynomial(offaxis_angle,poly_amp2[0],poly_amp2[1],poly_amp2[2])
-  amp3 = polynomial(offaxis_angle,poly_amp3[0],poly_amp3[1],poly_amp3[2])
-  width_x1 = polynomial(offaxis_angle,poly_width_x1[0],poly_width_x1[1],poly_width_x1[2])
-  width_y1 = polynomial(offaxis_angle,poly_width_y1[0],poly_width_y1[1],poly_width_y1[2])
-  width_x2 = polynomial(offaxis_angle,poly_width_x2[0],poly_width_x2[1],poly_width_x2[2])
-  width_y2 = polynomial(offaxis_angle,poly_width_y2[0],poly_width_y2[1],poly_width_y2[2])
-  width_x3 = polynomial(offaxis_angle,poly_width_x3[0],poly_width_x3[1],poly_width_x3[2])
-  width_y3 = polynomial(offaxis_angle,poly_width_y3[0],poly_width_y3[1],poly_width_y3[2])
+  amp1 = poly(offaxis_angle,poly_amp1)
+  amp2 = poly(offaxis_angle,poly_amp2)
+  amp3 = poly(offaxis_angle,poly_amp3)
+  width_x1 = poly(offaxis_angle,poly_width_x1)
+  width_y1 = poly(offaxis_angle,poly_width_y1)
+  width_x2 = poly(offaxis_angle,poly_width_x2)
+  width_y2 = poly(offaxis_angle,poly_width_y2)
+  width_x3 = poly(offaxis_angle,poly_width_x3)
+  width_y3 = poly(offaxis_angle,poly_width_y3)
 
   
 ;;08/31 - Made psf_scale_factor always 2 so full image always convolved
