@@ -8,7 +8,9 @@ import pyfoxsi
 import numpy as np
 import sunpy.map
 import astropy.units as u
-from astropy.convolution import convolve, Gaussian2DKernel
+from astropy.convolution import Gaussian2DKernel
+from astropy.convolution import convolve as astropy_convolve
+from sunpy.map import Map
 
 __all__ = ['psf', 'convolve']
 
@@ -111,7 +113,7 @@ def multi_gauss2d((x,y), amplitude, center, sigma_x, sigma_y, theta):
         i += 1
     return result
 
-def psf(x, y):
+def psf(x, y, scale=1 * u.arcsec / u.pix):
     r"""The point spread function.
 
     .. warning: implement the x and y keywords are not yet implemented.
@@ -122,15 +124,19 @@ def psf(x, y):
         The angle at which the psf is returned in the horizontal direction.
     y : `~astropy.units.quantities` <deg>
         The angle at which the psf is returned in the vertical direction.
+    scale : float
+        The pixel scale (e.g. arcsec / pixel). Should be set to match the map
+        with which it will be convolved.
 
     Returns
     -------
     kernel : `~astropy.convolution.Gaussian2DKernel`
-        A psf kernel, normalized. Assumes 1 arcsec pixels.
+        A psf kernel, normalized. Assumes 1 arcsec pixels if scale is not set.
 
     Examples
     --------
     >>> p = psf(0 * u.arcmin, 0 * u.arcmin)
+    >>> p = psf(0 * u.arcmin, 0 * u.arcmin, 2 * u.arcsec)
     """
     # load the PSF parameters
     path = os.path.dirname(pyfoxsi.__file__)
@@ -148,10 +154,13 @@ def psf(x, y):
         poly_params.append(f(offaxis_angle))
 
     amplitude = (poly_params[0], poly_params[1], poly_params[2])
-    width = [poly_params[3], poly_params[4], poly_params[5]]
+    width = u.Quantity([poly_params[3], poly_params[4], poly_params[5]], 'arcsec')
+    width = width / scale
+    print(width)
     # add 90 deg to the polar angle to make the rotation angle perpendicular
     # to the polar angle
-    kernel = amplitude[0] * Gaussian2DKernel(width[0]) + amplitude[1] * Gaussian2DKernel(width[1]) + amplitude[2] * Gaussian2DKernel(width[2])
+    kernel = amplitude[0] * Gaussian2DKernel(width[0].value) + amplitude[1] * Gaussian2DKernel(width[1].value) + amplitude[2] * Gaussian2DKernel(width[2].value)
+    kernel.normalize()
     return kernel
 
 def convolve(sunpy_map):
@@ -167,5 +176,12 @@ def convolve(sunpy_map):
     sunpy_map : `~sunpy.map.GenericMap`
         The map convolved with the FOXSI psf.
     """
+
+    this_psf = psf(0 * u.arcmin, 0 * u.arcmin, scale=sunpy_map.scale.x)
+
+    smoothed_data = astropy_convolve(sunpy_map.data, this_psf)
+    meta = sunpy_map.meta.copy()
+    meta['telescop'] = 'FOXSI-SMEX'
+    result = Map((smoothed_data, meta))
 
     return result
