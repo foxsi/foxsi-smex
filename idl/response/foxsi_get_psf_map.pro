@@ -85,7 +85,8 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   polar_angle = atan(yaw, pitch) ; angle in radians
   
  ;read FOXSI PSF parameter fit values from file
-  variable_fit_params = READ_ASCII('psf_parameters.txt')
+  COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path
+  variable_fit_params = READ_ASCII(foxsi_data_path + 'psf_parameters.txt')
   
   poly_amp1 = reverse(variable_fit_params.field1[*,0])
   poly_amp2 = reverse(variable_fit_params.field1[*,1])
