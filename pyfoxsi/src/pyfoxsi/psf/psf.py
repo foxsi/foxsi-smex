@@ -8,8 +8,9 @@ import pyfoxsi
 import numpy as np
 import sunpy.map
 import astropy.units as u
+from astropy.convolution import convolve, Gaussian2DKernel
 
-__all__ = ['Psf', 'psf_map']
+__all__ = ['psf', 'convolve']
 
 def gauss2d((x,y), amplitude, xo, yo, sigma_x, sigma_y, theta) :
     r"""A two-dimensional eliptical Gaussian function of the form
@@ -110,49 +111,61 @@ def multi_gauss2d((x,y), amplitude, center, sigma_x, sigma_y, theta):
         i += 1
     return result
 
-def psf_map(pitch, yaw):
-    p = Psf(pitch, yaw)
-    scale = 0.1
-    x, y = np.meshgrid(np.arange(-20, 20, scale), np.arange(-20, 20, scale))
-    im = p.func((x,y)).reshape(x.shape)
-    iy, ix = np.unravel_index(np.argmax(im), im.shape)
-    header =  {'cdelt1': scale,
-               'cdelt2': scale,
-               'telescop': 'FOXSI-2 Simulate',
-               'crpix1': iy, 'crpix2': ix,
-               'crval1': 0, 'crval2': 0}
-    this_map = sunpy.map.Map(im, header).shift(pitch, yaw)
-    return this_map
+def psf(x, y):
+    r"""The point spread function.
 
+    .. warning: implement the x and y keywords are not yet implemented.
 
-class Psf(object):
+    Parameters
+    ----------
+    x : `~astropy.units.quantities` <deg>
+        The angle at which the psf is returned in the horizontal direction.
+    y : `~astropy.units.quantities` <deg>
+        The angle at which the psf is returned in the vertical direction.
 
-    def __init__(self, pitch, yaw):
-        # load the PSF parameters
-        path = os.path.dirname(pyfoxsi.__file__)
-        for i in np.arange(3):
-            path = os.path.dirname(path)
-        path = os.path.join(path, 'data/')
-        params = np.loadtxt(os.path.join(path, 'psf_parameters.txt'))
+    Returns
+    -------
+    kernel : `~astropy.convolution.Gaussian2DKernel`
+        A psf kernel, normalized. Assumes 1 arcsec pixels.
 
-        self.offaxis_angle, self.polar_angle = self._calculate_angles(pitch, yaw)
+    Examples
+    --------
+    >>> p = psf(0 * u.arcmin, 0 * u.arcmin)
+    """
+    # load the PSF parameters
+    path = os.path.dirname(pyfoxsi.__file__)
+    for i in np.arange(3):
+        path = os.path.dirname(path)
+    path = os.path.join(path, 'data/')
+    params = np.loadtxt(os.path.join(path, 'psf_parameters.txt'))
 
-        poly_params = []
-        for g in params:
-            f = np.poly1d(g)
-            poly_params.append(f(self.offaxis_angle))
+    offaxis_angle = np.sqrt(y ** 2 + x ** 2)
+    polar_angle = np.arctan2(y, x)
 
-        amplitude = (poly_params[0], poly_params[1], poly_params[2])
-        width_x = [poly_params[3], poly_params[5], poly_params[7]]
-        width_y = [poly_params[4], poly_params[6], poly_params[8]]
-        self.func = lambda (x, y): multi_gauss2d((x, y), amplitude, (0, 0), width_x, width_y, self.polar_angle)
+    poly_params = []
+    for g in params:
+        f = np.poly1d(g)
+        poly_params.append(f(offaxis_angle))
 
-    def _calculate_angles(self, pitch, yaw):
-        """Calculate the polar angle and offaxis angle"""
-        offaxis_angle = np.sqrt(pitch **2 + yaw ** 2)
-        polar_angle = np.arctan2(yaw, pitch)
-        return (polar_angle, offaxis_angle)
+    amplitude = (poly_params[0], poly_params[1], poly_params[2])
+    width = [poly_params[3], poly_params[4], poly_params[5]]
+    # add 90 deg to the polar angle to make the rotation angle perpendicular
+    # to the polar angle
+    kernel = amplitude[0] * Gaussian2DKernel(width[0]) + amplitude[1] * Gaussian2DKernel(width[1]) + amplitude[2] * Gaussian2DKernel(width[2])
+    return kernel
 
-    def _calculate_parameter(self, offaxis_angle, params):
-        f = np.poly1d(params)
-        return f(offaxis_angle)
+def convolve(sunpy_map):
+    """Convolve the FOXSI psf with an input map
+
+    Parameters
+    ----------
+    sunpy_map : `~sunpy.map.GenericMap`
+        An input map.
+
+    Returns
+    -------
+    sunpy_map : `~sunpy.map.GenericMap`
+        The map convolved with the FOXSI psf.
+    """
+
+    return result
