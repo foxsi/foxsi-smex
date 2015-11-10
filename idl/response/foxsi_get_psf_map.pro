@@ -116,9 +116,9 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   psf_x_size = 2 * (long(x_size) / 2) + 1
   psf_y_size = 2 * (long(y_size) / 2) + 1
 
-  x = (findgen(psf_x_size) * dx) - ( (psf_x_size*dx / 2.)) + xc
-  y = (findgen(psf_y_size) * dy) - ( (psf_y_size*dy / 2.)) + yc
-  
+  x = (findgen(psf_x_size) * dx) - ( ((psf_x_size - 1) * dx / 2.)) + xc
+  y = (findgen(psf_y_size) * dy) - ( ((psf_y_size - 1) * dy / 2.)) + yc
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
 ;;;;;;;;;;;;;;;;;;;;;;;;;gaussian fits
