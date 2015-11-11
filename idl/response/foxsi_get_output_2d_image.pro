@@ -59,35 +59,20 @@ x=0.0 ;; Redundant FOV coordinates required as arguments for get_psf_array
 y=0.0 ;; Will come into play when FOV coordinate dependence is introduced into psf
 
 dims   = SIZE(source_map.data, /DIM)
-x_size = dims[0]*1.0  ;;; Get dimensions of FOV in pixels
-y_size = dims[1]*1.0 
+x_size = dims[0]  ;;; Get dimensions of FOV in pixels
+y_size = dims[1]
 
-print, strcompress('Source_Array_is_'+string(N_ELEMENTS(REFORM(source_map.data[*,0]))) $
-       +'x'+string(N_ELEMENTS(REFORM(source_map.data[0,*])))+'_Pixels', /REMOVE_AL)
-
-;;; Interpolate source_map to achieve odd dimensions for the purpose
-;;; of accurate convolution
-
-o_x_size =  x_size + 1 - (x_size MOD 2)
-o_y_size =  y_size + 1 - (y_size MOD 2)
-
-odd_source_array = CONGRID(source_map.data,o_x_size,o_y_size) 
-
-odd_dims = SIZE(odd_source_array)
+print, strcompress('Source_Array_is_'+string(x_size) $
+       +'x'+string(y_size)+'_Pixels', /REMOVE_AL)
 
 ;;; Obtain psf assuming constant across FOV
-
-;psf_array = foxsi_get_psf_array(source_map.xc,source_map.yc,source_map.dx      $
-;,source_map.dy,x,y,x_size=o_x_size,y_size=o_y_size)
+;;; The requested size of the PSF is double the source map for later convenience
 
 psf_map = foxsi_get_psf_map(source_map.xc,source_map.yc,source_map.dx      $
-,source_map.dy,x,y,x_size=o_x_size,y_size=o_y_size) 
+,source_map.dy,x,y,x_size=2*x_size-1,y_size=2*y_size-1)
 
+; psf_array has dimensions (2*x_size-1) by (2*y_size-1)
 psf_array = psf_map.data
-
-psf_dims   = SIZE(psf_array, /DIM)
-psf_x_size = psf_dims[0]*1.0
-psf_y_size = psf_dims[1]*1.0
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,33 +82,28 @@ psf_y_size = psf_dims[1]*1.0
 ;;; with wrapping.
 
 
-convolved_array = DBLARR(o_x_size,o_y_size)
+convolved_array = DBLARR(x_size,y_size)
 
-FOR y = 0, odd_dims[2]-1 DO BEGIN
-   FOR x = 0, odd_dims[1]-1 DO BEGIN
+FOR y = 0, y_size-1 DO BEGIN
+   FOR x = 0, x_size-1 DO BEGIN
      
       
-      convolved_pixel         = psf_array * odd_source_array[x,y]
+      convolved_pixel         = psf_array * source_map.data[x,y]
      
 
-      shifted_convolved_pixel = convolved_pixel[(psf_x_size/2-x):(psf_x_size/2-x+o_x_size-1),$
-                                (psf_y_size/2 - y):(psf_y_size/2 -y +o_y_size-1)]
+      shifted_convolved_pixel = convolved_pixel[x_size-1-x:2*x_size-2-x,$
+                                y_size-1-y:2*y_size-2-y]
 
       convolved_array        = convolved_array + shifted_convolved_pixel
 
        
       ;;; Progress monitor - run time is still long for large (>150'x150') FOV sizes 
-      IF x eq 0 THEN print, STRCOMPRESS("Image_Row_"+string(FIX(y))+"_of_"    $
-                             +string(FIX(o_y_size-1))+"_completed", /REMOVE_AL)   
+      IF x eq 0 THEN print, STRCOMPRESS("Image_Row_"+string(FIX(y+1))+"_of_"    $
+                             +string(FIX(y_size))+"_completed", /REMOVE_AL)
 
    ENDFOR
 ENDFOR
 
-
-;;;Interpolate back to original dimensions and renormalise
-
-source_map.data = CONGRID(odd_source_array,x_size,y_size)*TOTAL(source_map.data)            $
-                  /TOTAL(odd_source_array)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
