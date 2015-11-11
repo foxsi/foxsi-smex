@@ -159,7 +159,9 @@ def psf(x, y, scale=1 * u.arcsec / u.pix):
     print(width)
     # add 90 deg to the polar angle to make the rotation angle perpendicular
     # to the polar angle
-    kernel = amplitude[0] * Gaussian2DKernel(width[0].value) + amplitude[1] * Gaussian2DKernel(width[1].value) + amplitude[2] * Gaussian2DKernel(width[2].value)
+    kernel = amplitude[0] * Gaussian2DKernel(width[0].value) * width[0].value ** 2 +\
+             amplitude[1] * Gaussian2DKernel(width[1].value) * width[1].value ** 2  +\
+             amplitude[2] * Gaussian2DKernel(width[2].value) * width[2].value ** 2
     kernel.normalize()
     return kernel
 
