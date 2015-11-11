@@ -30,6 +30,8 @@
 ;;;               
 ;;;               no_count_stats - if keyword set no counting stats
 ;;;                                accounted for
+;;;               oversample_psf - degree of oversampling to produce discrete
+;;;                                PSF. Default is 1 (no oversampling)
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default source array is 
@@ -41,7 +43,8 @@
 ;;;                detectable at low resolutions.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_count_stats = no_count_stats
+FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_count_stats = no_count_stats,$
+  oversample_psf=oversample_psf
 
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
@@ -69,7 +72,7 @@ print, strcompress('Source_Array_is_'+string(x_size) $
 ;;; The requested size of the PSF is double the source map for later convenience
 
 psf_map = foxsi_get_psf_map(source_map.xc,source_map.yc,source_map.dx      $
-,source_map.dy,x,y,x_size=2*x_size-1,y_size=2*y_size-1)
+,source_map.dy,x,y,x_size=2*x_size-1,y_size=2*y_size-1, oversample=oversample_psf)
 
 ; psf_array has dimensions (2*x_size-1) by (2*y_size-1)
 psf_array = psf_map.data
