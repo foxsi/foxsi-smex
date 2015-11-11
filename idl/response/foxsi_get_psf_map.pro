@@ -60,6 +60,8 @@ END
 ;;;                         x-dimension
 ;;;                y_size - the number of pixels in the PSF map in the
 ;;;                         y-dimension
+;;;                oversample - the number of subpixels to average over in
+;;;                             each pixel. Default is 1 (no oversampling)
 ;;;
 ;;;OUTPUTS:        psf_map - an SSW map of the PSF at the desired
 ;;;                          pitch, yaw location.
@@ -71,14 +73,17 @@ END
 ;;;                polynomial function. These fits are used by this routine.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_size                          
- 
+FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
+  x_size=x_size, y_size=y_size, oversample=oversample
+
   default,xc,0
   default,yc,0
   default,dx,0.5
   default,dy,0.5
   default,x_size,101
   default,y_size,101
+  default,oversample,1
+  oversample_int = long(oversample) > 1
   
   ; calculate offaxis angle and theta from pitch and yaw
   offaxis_angle = sqrt(pitch^2 + yaw^2) / 60. ; convert to arcminutes
@@ -113,11 +118,11 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
 ;;;08/31 - Make sure dimensions of psf_array are odd to be able to
 ;;;        precisely line up pixels during convolution.
 ;;;
-  psf_x_size = 2 * (long(x_size) / 2) + 1
-  psf_y_size = 2 * (long(y_size) / 2) + 1
+  psf_x_size = (2 * (long(x_size) / 2) + 1) * oversample_int
+  psf_y_size = (2 * (long(y_size) / 2) + 1) * oversample_int
 
-  x = (findgen(psf_x_size) * dx) - ( ((psf_x_size - 1) * dx / 2.)) + xc
-  y = (findgen(psf_y_size) * dy) - ( ((psf_y_size - 1) * dy / 2.)) + yc
+  x = (findgen(psf_x_size) * dx / oversample_int) - ( ((psf_x_size - 1) / 2. * dx / oversample_int)) + xc
+  y = (findgen(psf_y_size) * dy / oversample_int) - ( ((psf_y_size - 1) / 2. * dy / oversample_int)) + yc
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
@@ -130,6 +135,11 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
 
   ;; Normalise total PSF so that total of psf_array EQ 1
   psf = (g1 + g2 + g3) / total(g1+g2+g3)
+
+  if oversample_int gt 1 then begin
+    psf = reform(psf, oversample_int, psf_x_size / oversample_int, oversample_int, psf_y_size / oversample_int, /overwrite)
+    psf = total(total(psf, 3), 1)
+  endif
 
   ;make the PSF as an SSW map
   psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', polar_angle = polar_angle*!radeg,$
