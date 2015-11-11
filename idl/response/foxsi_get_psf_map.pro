@@ -1,9 +1,3 @@
-FUNCTION polynomial, angle, a, b, c
-  result = (a*angle^2) + (b*angle) + c
-  RETURN,result
-END
-
-
 FUNCTION gauss2d,x,y, amp, cen_x, cen_y, sigma_x, sigma_y, theta
   ; a 2d-gaussian that includes a rotation angle theta
   ; PARAMETERS:
@@ -66,6 +60,8 @@ END
 ;;;                         x-dimension
 ;;;                y_size - the number of pixels in the PSF map in the
 ;;;                         y-dimension
+;;;                oversample - the number of subpixels to average over in
+;;;                             each pixel. Default is 1 (no oversampling)
 ;;;
 ;;;OUTPUTS:        psf_map - an SSW map of the PSF at the desired
 ;;;                          pitch, yaw location.
@@ -77,57 +73,57 @@ END
 ;;;                polynomial function. These fits are used by this routine.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_size                          
- 
+FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
+  x_size=x_size, y_size=y_size, oversample=oversample
+
   default,xc,0
   default,yc,0
   default,dx,0.5
   default,dy,0.5
-  default,x_size,100
-  default,y_size,100
+  default,x_size,101
+  default,y_size,101
+  default,oversample,1
+  oversample_int = long(oversample) > 1
   
   ; calculate offaxis angle and theta from pitch and yaw
   offaxis_angle = sqrt(pitch^2 + yaw^2) / 60. ; convert to arcminutes
   polar_angle = atan(yaw, pitch) ; angle in radians
   
  ;read FOXSI PSF parameter fit values from file
-  variable_fit_params = READ_ASCII('psf_parameters.txt')
+  COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path
+  variable_fit_params = READ_ASCII(foxsi_data_path + 'psf_parameters.txt')
   
-  poly_amp1 = variable_fit_params.field1[*,0]
-  poly_amp2 = variable_fit_params.field1[*,1]
-  poly_amp3 = variable_fit_params.field1[*,2]
-  poly_width_x1 = variable_fit_params.field1[*,3]
-  poly_width_x2 = variable_fit_params.field1[*,5]
-  poly_width_x3 = variable_fit_params.field1[*,7]
-  poly_width_y1 = variable_fit_params.field1[*,4]
-  poly_width_y2 = variable_fit_params.field1[*,6]
-  poly_width_y3 = variable_fit_params.field1[*,8]
-
+  poly_amp1 = reverse(variable_fit_params.field1[*,0])
+  poly_amp2 = reverse(variable_fit_params.field1[*,1])
+  poly_amp3 = reverse(variable_fit_params.field1[*,2])
+  poly_width_x1 = reverse(variable_fit_params.field1[*,3])
+  poly_width_x2 = reverse(variable_fit_params.field1[*,4])
+  poly_width_x3 = reverse(variable_fit_params.field1[*,5])
+  poly_width_y1 = reverse(variable_fit_params.field1[*,6])
+  poly_width_y2 = reverse(variable_fit_params.field1[*,7])
+  poly_width_y3 = reverse(variable_fit_params.field1[*,8])
 
   ;reconstruct the fit functions for each parameter of the FOXSI PSF
-  amp1 = polynomial(offaxis_angle,poly_amp1[0],poly_amp1[1],poly_amp1[2])
-  amp2 = polynomial(offaxis_angle,poly_amp2[0],poly_amp2[1],poly_amp2[2])
-  amp3 = polynomial(offaxis_angle,poly_amp3[0],poly_amp3[1],poly_amp3[2])
-  width_x1 = polynomial(offaxis_angle,poly_width_x1[0],poly_width_x1[1],poly_width_x1[2])
-  width_y1 = polynomial(offaxis_angle,poly_width_y1[0],poly_width_y1[1],poly_width_y1[2])
-  width_x2 = polynomial(offaxis_angle,poly_width_x2[0],poly_width_x2[1],poly_width_x2[2])
-  width_y2 = polynomial(offaxis_angle,poly_width_y2[0],poly_width_y2[1],poly_width_y2[2])
-  width_x3 = polynomial(offaxis_angle,poly_width_x3[0],poly_width_x3[1],poly_width_x3[2])
-  width_y3 = polynomial(offaxis_angle,poly_width_y3[0],poly_width_y3[1],poly_width_y3[2])
+  amp1 = poly(offaxis_angle,poly_amp1)
+  amp2 = poly(offaxis_angle,poly_amp2)
+  amp3 = poly(offaxis_angle,poly_amp3)
+  width_x1 = poly(offaxis_angle,poly_width_x1)
+  width_y1 = poly(offaxis_angle,poly_width_y1)
+  width_x2 = poly(offaxis_angle,poly_width_x2)
+  width_y2 = poly(offaxis_angle,poly_width_y2)
+  width_x3 = poly(offaxis_angle,poly_width_x3)
+  width_y3 = poly(offaxis_angle,poly_width_y3)
 
-  
-;;08/31 - Made psf_scale_factor always 2 so full image always convolved
-  psf_scale_factor = 2
 
 ;;;08/31 - Make sure dimensions of psf_array are odd to be able to
 ;;;        precisely line up pixels during convolution.
 ;;;
-  psf_x_size = 1.0*(psf_scale_factor*x_size +1 - (psf_scale_factor*x_size MOD 2))
-  psf_y_size = 1.0*(psf_scale_factor*y_size +1 - (psf_scale_factor*y_size MOD 2))
+  psf_x_size = (2 * (long(x_size) / 2) + 1) * oversample_int
+  psf_y_size = (2 * (long(y_size) / 2) + 1) * oversample_int
 
-  x = (findgen(psf_x_size) * dx) - ( (psf_x_size*dx / 2.)) + xc
-  y = (findgen(psf_y_size) * dy) - ( (psf_y_size*dy / 2.)) + yc
-  
+  x = (findgen(psf_x_size) * dx / oversample_int) - ( ((psf_x_size - 1) / 2. * dx / oversample_int)) + xc
+  y = (findgen(psf_y_size) * dy / oversample_int) - ( ((psf_y_size - 1) / 2. * dy / oversample_int)) + yc
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
 ;;;;;;;;;;;;;;;;;;;;;;;;;gaussian fits
@@ -140,18 +136,16 @@ FUNCTION foxsi_get_psf_map,xc,yc, dx, dy, pitch, yaw ,x_size=x_size, y_size=y_si
   ;; Normalise total PSF so that total of psf_array EQ 1
   psf = (g1 + g2 + g3) / total(g1+g2+g3)
 
+  if oversample_int gt 1 then begin
+    psf = reform(psf, oversample_int, psf_x_size / oversample_int, oversample_int, psf_y_size / oversample_int, /overwrite)
+    psf = total(total(psf, 3), 1)
+  endif
+
   ;make the PSF as an SSW map
   psf_map = make_map(psf,xc = xc, yc = yc, dx = dx, dy = dy, id = 'FOXSI PSF', polar_angle = polar_angle*!radeg,$
                      offaxis_angle=offaxis_angle, offaxis_angle_units = 'arcmin', polar_angle_units = 'deg')
 
- ;??? not sure what this does
-psf_centre1 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]  ;;PSF centered
-psf_centre2 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
-psf_centre3 = [(psf_x_size+1)/2, (psf_y_size+1)/2 ]
-
-
 ;; Return PSF map
-print, 'Returned psf map'
 RETURN, psf_map
 
 END
