@@ -284,7 +284,7 @@ for layer = 0, n_elements(source_map_spectrum) - 1 do begin
 
   ; Generate the convolved image, with noise if desired
   this_map = foxsi_get_output_2d_image(source_map=this_map,$
-                                       px=px, no_count_stats=no_count_stats, oversample_psf=oversample_psf)
+                                       px=pix_size, no_count_stats=no_count_stats, oversample_psf=oversample_psf)
 
   ; Append the new map to the output map cube
   this_map = add_tag(this_map, lower_array[layer], 'energy_bin_lower_bound_keV')
