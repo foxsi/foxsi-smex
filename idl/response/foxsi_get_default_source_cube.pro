@@ -12,6 +12,7 @@
 ;;;                                                                                            
 ;;;KEYWORDS:      dx, dy - binsize of pixels in arcseconds 
 ;;;               xc, yc - centre of image in solar coordinates (arcseconds)
+;;;               nbins - number of energy bins.  Default is 29
 ;;;                                                                                            
 ;;;                                                                                            
 ;;;COMMENTS:      Currently returns an array of maps with 2 Gaussian sources,
@@ -24,34 +25,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FUNCTION foxsi_get_default_source_cube, dx = dx, dy = dy, xc = xc, yc = yc,   $
-                                                eb = number_of_energy_bins
+                                        nbins = nbins
 
 ;;Define keyword defaults to 1 arcsecond per pixel and centre the image at the solar origin
 DEFAULT, dx, 1
 DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
-DEFAULT, eb, 31
+DEFAULT, nbins, 29
 
-lower_energy_bound = 1.0
+lower_energy_bound = 2.0
 upper_energy_bound = 60.0
 
-energy_spacings   = FINDGEN(eb)*(upper_energy_bound - lower_energy_bound)/(eb-1) 
-lower_bound_array = energy_spacings[0:eb-2] + lower_energy_bound
-upper_bound_array = energy_spacings[1:*] + lower_energy_bound
+energy_spacings   = FINDGEN(nbins+1)*(upper_energy_bound - lower_energy_bound)/nbins
+lower_bound_array = energy_spacings[0:nbins-1] + lower_energy_bound
+upper_bound_array = energy_spacings[1:nbins] + lower_energy_bound
 
 source_array = DBLARR(100,100)
 dims         = SIZE(source_array, /DIM)
 
 ;;;; Warning: changing the above dimensions of source_array will
 ;;;; significantly affect the code runtime.
-
-;Make structure to act as a placeholder while making the source cube
-cube_creator = ADD_TAG(ADD_TAG(MAKE_MAP(source_array, dx=dx, dy=dy, xc = xc,      $
-               yc = yc, id = "Source Map"),0.0,'energy_bin_lower_bound_keV'),0.0,  $
-              'energy_bin_upper_bound_keV')
-
-source_map_cube = REPLICATE(cube_creator, eb - 1 )
 
 x_size = dims[0]*1.0
 y_size = dims[1]*1.0
@@ -69,7 +63,7 @@ source_centre2 = [7*x_size/8,5*(y_size/8)]
 ;;; Loop over spectral slices of the cube and assign each a spatial
 ;;; distribution of counts.
 
-FOR i = 0, eb - 2 DO BEGIN
+FOR i = 0, nbins - 1 DO BEGIN
 
    source1 = 1000.0;*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
    source2 = 1000.0*exp(-1*i*ALOG(2)/10)
@@ -97,7 +91,7 @@ FOR i = 0, eb - 2 DO BEGIN
    source_map = ADD_TAG(source_map, lower_bound_array[i],'energy_bin_lower_bound_keV')
    source_map = ADD_TAG(source_map, upper_bound_array[i],'energy_bin_upper_bound_keV')
 
-   source_map_cube[i] = source_map
+   source_map_cube = append_arr(source_map_cube, source_map, /no_copy)
 
 ENDFOR
 

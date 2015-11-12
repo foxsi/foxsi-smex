@@ -49,6 +49,9 @@
 ;;;
 ;;;               no_count_stats - if set, counting statistics ignored
 ;;;
+;;;               oversample_psf - degree of oversampling to produce a more
+;;;                                accurate PSF. Default is 1 (no oversampling)
+;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default spatial dimensions are set to 
 ;;;                [100,100] ~1.66' X 1.66' FOV at 1 arcsec per
@@ -66,7 +69,8 @@
 FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,    $
                                       e_min = e_min, e_max = e_max, px =  pix_size, $
                                       bin_edges_array = bin_edges_array,            $
-                                      no_count_stats = no_count_stats
+                                      no_count_stats = no_count_stats,              $
+                                      oversample_psf = oversample_psf
 
 upper_lower_bound_mode = 0
 array_mode = 0
@@ -102,7 +106,7 @@ ENDELSE
 
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
-RESOLVE_ROUTINE, 'foxsi_get_psf_map', /IS_FUNCTION
+RESOLVE_ROUTINE, 'foxsi_get_output_2d_image', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
 RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
@@ -131,50 +135,12 @@ DEFAULT, pix_size, 3
 
 ;;;; Pull spectral information from input source structure array.
 
-spec_size   = N_ELEMENTS(source_map_spectrum.data[0,0,*])
+spec_size   = N_ELEMENTS(source_map_spectrum)
 upper_array = source_map_spectrum.energy_bin_upper_bound_keV
 lower_array = source_map_spectrum.energy_bin_lower_bound_keV
 spec_res    = upper_array[0] - lower_array[0]
 
 print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
-
-;; Redundant FOV coordinates required as arguments for get_psf_array
-x=0 
-y=0
-
- ;;; Get dimensions of FOV in pixels
-dims   = SIZE(source_map_spectrum[0].data, /DIM)
-x_size = dims[0]*1.0
-y_size = dims[1]*1.0
-
-print, strcompress('Source_FOV_is_'+STRING(FIX(dims[0])) +'x'  $
-       + STRING(FIX(dims[1]))+'_Pixels', /REMOVE_AL)
-
-
-;;; Interpolate source to achieve odd dimensions for the purpose
-;;; of accurate convolution
-
-o_x_size =  x_size + 1 - (x_size MOD 2)
-o_y_size =  y_size + 1 - (y_size MOD 2)
-
-odd_source_cube = CONGRID(source_map_spectrum.data,o_x_size,o_y_size,spec_size)
-
-;;; Obtain psf assuming constant across FOV
-
-psf_map = foxsi_get_psf_map(source_map_spectrum[0].xc,source_map_spectrum[0].yc, $
-            source_map_spectrum[0].dx, source_map_spectrum[0].dy, x, y,        $
-            x_size = o_x_size, y_size = o_y_size) 
-
-psf_array = psf_map.data
-psf_dims   = SIZE(psf_map.data,/DIM)
-psf_x_size = psf_dims[0]*1.0
-psf_y_size = psf_dims[1]*1.0
-
-
-;; Create Empty Array for putting in processed values
-
-convolved_cube = odd_source_cube*0
-
 
 
 ;; Obtain effective_area energy profile using foxsi_get_effective_area function
@@ -311,148 +277,20 @@ ENDIF
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+for layer = 0, n_elements(source_map_spectrum) - 1 do begin
+  ; Convert the source map from photons to counts
+  this_map = source_map_spectrum[layer]
+  this_map.data *= eff_area_values[layer]
 
-;;;;; Each slice of the source cube is multiplied by the corresponding
-;;;;; effective area value. This converts a flux to counts/s.
+  ; Generate the convolved image, with noise if desired
+  this_map = foxsi_get_output_2d_image(source_map=this_map,$
+                                       px=pix_size, no_count_stats=no_count_stats, oversample_psf=oversample_psf)
 
-attenuated_source = odd_source_cube*TRANSPOSE(REBIN(eff_area_values,    $
-                     N_ELEMENTS(eff_area_values), o_y_size, o_x_size))
-
-array_dims        = SIZE(attenuated_source, /DIM)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-;;; 08/31 -Improved convolution method takes only the pixels in the psf which
-;;; overlap with the convolved image for a given FOV pixel. 
-;;; Eliminates need to shift whole array and therefore the problem
-;;; with wrapping.
-
-;;; Each slice is convolved separately, this means larger FOVs very
-;;; quickly become costly in computation time if there are many
-;;; spectral positions in the source.
-
-FOR j = 0.0, N_ELEMENTS(attenuated_source[0,0,*])-1 DO BEGIN
-
-   convolved_array = DBLARR(o_x_size,o_y_size)
-   
-
-PRINT, STRCOMPRESS('Convolving_spectral_slice_'+STRING(FIX(j+1))+       $
-       '_of_'+STRING(spec_size),/REMOVE_AL)
-
-     FOR y = 0.0, array_dims[1] - 1 DO BEGIN
-
-        FOR x = 0.0, array_dims[0] - 1 DO BEGIN
-
-	    convolved_pixel = psf_array * attenuated_source[x,y,j]
-
-	    shifted_convolved_pixel = convolved_pixel[(psf_x_size/2-x):     $
-            (psf_x_size/2-x+o_x_size-1), (psf_y_size/2 -y)                  $
-            :(psf_y_size/2-y+o_y_size-1)]
-
-            convolved_array = convolved_array + shifted_convolved_pixel
-        
-         ENDFOR
-
-    ENDFOR
-
- 
-   convolved_cube[*,*,j] = convolved_array
- 
-ENDFOR
-
-source_map_spectrum.data = CONGRID(odd_source_cube,x_size,y_size,spec_size)          $
-                           *TOTAL(source_map_spectrum.data)/TOTAL(odd_source_cube)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;;; Do rebinning due to detector pixelation;;;
-
-rebin =  FREBIN(convolved_cube[*,*,0],x_size*source_map_spectrum[0].dx/pix_size,     $
-         y_size*source_map_spectrum[0].dy/pix_size, /TOTAL)
-
-rebinned_convolved_cube = DBLARR(N_ELEMENTS(rebin[*,0]), N_ELEMENTS(rebin[0,*]),     $
-                          N_ELEMENTS(convolved_cube[0,0,*]))
-
-renorm = 0
-
-FOR layer = 0, N_ELEMENTS(convolved_cube[0,0,*])-1 DO BEGIN
-
-   rebin = FREBIN(convolved_cube[*,*,layer],x_size*source_map_spectrum[0].dx/pix_size, $
-           y_size*source_map_spectrum[0].dy/pix_size, /TOTAL)
-   
-
-
-   IF ABS(TOTAL(rebin) - TOTAL(convolved_cube[*,*,layer])) GT 0.0001  THEN BEGIN
-   rebin =TOTAL(convolved_cube[*,*,layer])* (rebin)/TOTAL(rebin) 
-   ;;;; Renormalise counts to assume lossless between optics and detector
-   renorm = 1
-
-   ENDIF
-
-  
-
-   rebinned_convolved_cube[*,*,layer] = rebin  
-
-ENDFOR
-
- IF renorm EQ 1 THEN print, 'Rebinning loss detected, renormalising...'
-;; Detect if FREBIN causes unacceptable loss of counts (e.g for non
-;; integer pixelation ratio. If detected, total counts are
-;; renormalised to correct (ideal) value.
-
-
-
-
-;;; Makes and outputs maps of convolved,rebinned cube  with pixel size 
-;;; equal to the value of the px keyword (default = 3'' per pixel)
-;;; with the appended tags detailed in the preamble,
-
-rebinned_cube_creator = ADD_TAG(ADD_TAG(make_map(rebinned_convolved_cube[*,*,0], dx =         $
-                        pix_size, dy = pix_size, xc = source_map_spectrum.xc, yc =            $
-                        source_map_spectrum.yc, id = STRCOMPRESS(                             $
-                        'Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL)),   $
-                        0.0, 'energy_bin_lower_bound_keV'), 0.0,'energy_bin_upper_bound_kev')
-
-output_map_cube = REPLICATE(rebinned_cube_creator,             $            
-                  N_ELEMENTS(rebinned_convolved_cube[0,0,*]))
-
-FOR rebin_layer = 0.0, N_ELEMENTS(rebinned_convolved_cube[0,0,*])-1 DO BEGIN
-
-    rebinned_convolved_slice = MAKE_MAP(rebinned_convolved_cube[*,*,rebin_layer], dx =    $
-                               pix_size, dy = pix_size, xc =source_map_spectrum.xc, yc =  $
-                               source_map_spectrum.yc, id = STRCOMPRESS(                  $
-                              'Image_at_Energy_' +string(lower_array[rebin_layer])+ '-' + $
-                              string(upper_array[rebin_layer])+'keV',/REMOVE_AL))
-
-    rebinned_convolved_slice = ADD_TAG(rebinned_convolved_slice, lower_array[rebin_layer]$
-                               , 'energy_bin_lower_bound_keV')
-
-    rebinned_convolved_slice = ADD_TAG(rebinned_convolved_slice, upper_array[rebin_layer]$
-                               , 'energy_bin_upper_bound_keV')
-
-    output_map_cube[rebin_layer] = rebinned_convolved_slice
-
-
- ENDFOR
-
-output_dims = SIZE(output_map_cube.data, /DIM)
-
-;;;; Add noise due to counting statistics for each pixel ;;;;;
-
-IF KEYWORD_SET(no_count_stats) NE 1 THEN BEGIN
-   FOR x = 0, output_dims[0] - 1 DO BEGIN
-      FOR y = 0, output_dims[1] - 1 DO BEGIN
-         FOR z = 0, output_dims[2] - 1 DO BEGIN
-          mean = output_map_cube[z].data[x,y]
-             IF mean NE 0.0 THEN BEGIN 
-                  noisy_value = RANDOMU(seed, 1, POISSON = mean)
-                  output_map_cube[z].data[x,y] = noisy_value
-               ENDIF         
-          ENDFOR
-      ENDFOR
-   ENDFOR
-ENDIF
-print,  'output_map_cube returned'
+  ; Append the new map to the output map cube
+  this_map = add_tag(this_map, lower_array[layer], 'energy_bin_lower_bound_keV')
+  this_map = add_tag(this_map, upper_array[layer], 'energy_bin_upper_bound_keV')
+  output_map_cube = append_arr(output_map_cube, this_map, /no_copy)
+endfor
 
 RETURN, output_map_cube
 

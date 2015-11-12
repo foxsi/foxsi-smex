@@ -30,8 +30,8 @@
 ;;;               
 ;;;               no_count_stats - if keyword set no counting stats
 ;;;                                accounted for
-;;;               oversample_psf - degree of oversampling to produce discrete
-;;;                                PSF. Default is 1 (no oversampling)
+;;;               oversample_psf - degree of oversampling to produce a more
+;;;                                accurate PSF. Default is 1 (no oversampling)
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default source array is 

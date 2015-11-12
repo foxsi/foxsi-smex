@@ -34,7 +34,7 @@ FUNCTION foxsi_load_optics_effective_area
     readf, lun, header
     data_str = strarr(number_of_rows)
     readf, lun, data_str
-    close, lun
+    free_lun, lun
 
     data = fltarr(number_of_columns, number_of_rows)
 
