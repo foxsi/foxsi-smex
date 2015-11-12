@@ -113,7 +113,7 @@ def multi_gauss2d((x,y), amplitude, center, sigma_x, sigma_y, theta):
         i += 1
     return result
 
-def psf(x, y, scale=1 * u.arcsec / u.pix):
+def psf(x, y, scale=1 * u.arcsec / u.pix, oversample=1):
     r"""The point spread function.
 
     .. warning: implement the x and y keywords are not yet implemented.
@@ -127,6 +127,8 @@ def psf(x, y, scale=1 * u.arcsec / u.pix):
     scale : float
         The pixel scale (e.g. arcsec / pixel). Should be set to match the map
         with which it will be convolved.
+    oversample : int
+        The number of subpixels to average over to produce a more accurate PSF
 
     Returns
     -------
@@ -159,17 +161,21 @@ def psf(x, y, scale=1 * u.arcsec / u.pix):
     print(width)
     # add 90 deg to the polar angle to make the rotation angle perpendicular
     # to the polar angle
-    kernel = amplitude[0] * Gaussian2DKernel(width[0].value) + amplitude[1] * Gaussian2DKernel(width[1].value) + amplitude[2] * Gaussian2DKernel(width[2].value)
+    kernel = amplitude[0] * Gaussian2DKernel(width[0].value, mode='oversample', factor=oversample) * width[0].value ** 2 +\
+             amplitude[1] * Gaussian2DKernel(width[1].value, mode='oversample', factor=oversample) * width[1].value ** 2  +\
+             amplitude[2] * Gaussian2DKernel(width[2].value, mode='oversample', factor=oversample) * width[2].value ** 2
     kernel.normalize()
     return kernel
 
-def convolve(sunpy_map):
+def convolve(sunpy_map, oversample_psf=1):
     """Convolve the FOXSI psf with an input map
 
     Parameters
     ----------
     sunpy_map : `~sunpy.map.GenericMap`
         An input map.
+    oversample_psf : int
+        The number of subpixels to average over to produce a more accurate PSF
 
     Returns
     -------
@@ -177,7 +183,7 @@ def convolve(sunpy_map):
         The map convolved with the FOXSI psf.
     """
 
-    this_psf = psf(0 * u.arcmin, 0 * u.arcmin, scale=sunpy_map.scale.x)
+    this_psf = psf(0 * u.arcmin, 0 * u.arcmin, scale=sunpy_map.scale.x, oversample=oversample_psf)
 
     smoothed_data = astropy_convolve(sunpy_map.data, this_psf)
     meta = sunpy_map.meta.copy()
