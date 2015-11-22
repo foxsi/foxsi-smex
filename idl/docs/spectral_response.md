@@ -19,7 +19,7 @@ elements are not included.
 Don't forget to run @foxsi-smex-setup-script before trying the routines.
 
 ;
-; Example: Get and plot the effective area for all 3 FOXSI modules.
+; Example: Plot the effective area for all 3 FOXSI modules.
 ;
 
 @foxsi-smex-setup-script			; if not already run
@@ -28,7 +28,7 @@ area = foxsi_get_effective_area()
 plot, area.energy_kev, area.eff_area_cm2, /xlog, /ylog, yrange=[1.,1.e3], $
 	thick=3, xtitle='Energy [keV]', ytitle='FOXSI effective area [cm!U-3!N]'
 oplot, area.energy_kev, area.eff_area_optic_cm2, line=1, thick=3
-al_legend, ['Single module','Three modules'], line=[0,1], thick=3
+al_legend, ['Single module','Three modules'], line=[1,0], thick=3
 
 
 ;
