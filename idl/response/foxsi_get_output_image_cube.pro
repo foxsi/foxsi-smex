@@ -278,12 +278,15 @@ ENDIF
 
 
 for layer = 0, n_elements(source_map_spectrum) - 1 do begin
+
+	print, 'Processing map ', lower_array[layer], upper_array[layer], ' keV'
+
   ; Convert the source map from photons to counts
   this_map = source_map_spectrum[layer]
   this_map.data *= eff_area_values[layer]
 
   ; Generate the convolved image, with noise if desired
-  this_map = foxsi_get_output_2d_image(source_map=this_map,$
+  this_map = foxsi_get_output_2d_image(source_map=this_map, /quiet, $
                                        px=pix_size, no_count_stats=no_count_stats, oversample_psf=oversample_psf)
 
   ; Append the new map to the output map cube

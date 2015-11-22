@@ -35,6 +35,7 @@ Alternatively, a user supplied source_map may be supplied and/or the function ru
 custom pixelization (example 1") as follows:
 
     IDL> out_map = foxsi_get_2d_image(source_map, px = 1)
+    IDL> plot_map, out_map
 
 The source_map can be any plot_map structure containing the source to be simulated. 
 Any pixelization can be used for the source; this information will be gleaned from the 
