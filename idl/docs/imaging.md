@@ -1,7 +1,7 @@
 Imaging
 =======
 
-To get started, remember to work in your foxsi-smex/idl directory and on startup run the script 
+To get started, from your foxsi-smex/idl directory run the script 
 
         IDL> @foxsi-smex-setup-script.pro
 
@@ -13,104 +13,124 @@ Main Functions:
 
 
 foxsi_get_output_2d_image.pro                       (located in /response folder)
--------------------
+-----------------------------
 
 >> Requires make_map and plot_map functions.
 
 This function is intended to simulate the image measured by the FOXSI detectors for a
-given input source image without spectral information.This must be a 2D monochromatic source.
+given input source without regard to photon energy, i.e. a 2D monochromatic source.
+The function convolves the source map with the point spread function of the FOXSI optics.
+It then rebins the image to the pixelization of the detectors.  Random statistical 
+fluctuations are added by varying the value in each pixel using the Poisson uncertainties. 
+The addition of random statistics can be turned off by the keyword /NO_COUNT_STATS. 
+The default pixel size is 3" but can be set by the keyword PX.
 
-This involves modelling the convolution of the image due to the point spread function of
-the optics modules and the pixelisation of the detectors followed by accounting for counting
-statistics by replacing each pixels value with a randomly selected value from a poisson 
-distribution with a mean set by the original value of that pixel. The function may be run with an
-automatically generated source (two narrow gaussians near the centre of a 150x150 FOV)
-and a default pixelisation of 3'' per pixel with the call:
+The function may be run with an automatically generated source (two narrow gaussians 
+near the centre of a 150"x150" FOV) and a default pixelisation of 3" with the call:
 
-    IDL> rebinned_convolved_map = foxsi_get_2d_image()
+    IDL> out_map = foxsi_get_output_2d_image()
+    IDL> plot_map, out_map
 
-And the output viewed with the command:
+Alternatively, a user supplied source_map may be supplied and/or the function run with a
+custom pixelization (example 1") as follows:
 
-    IDL> plot_map, rebinned_convolved_map
+    IDL> out_map = foxsi_get_2d_image(source_map, px = 1)
+    IDL> plot_map, out_map
 
-Alternatively, a user supplied source_map may be supplied and the function run with a
-custom pixelisation as follows:
+The source_map can be any plot_map structure containing the source to be simulated. 
+Any pixelization can be used for the source; this information will be gleaned from the 
+plot_map structure.  The keyword PX is the pixelization for the detector only. 
 
-    IDL> rebinned_convolved_map = foxsi_get_2d_image(source_map, px = "Your Pixelisation Value")
-
-Note the source_map file contains information on the pixel size in arcseconds and the solar
-coordinates of the centre of the field of view. This is automatically read in and propagated
-in the programme.
-
-The convolution currently only has one point spread function which was obtained from measuring
-the point spread function for the on-axis position (<< note, currently off axis measurement used,
-waiting for on axis fitting parameters >>) and fitting this with three gaussians. (See the preamble
-of get_psf_array.pro for details). Future iterations of this code will include some functionality
-to include variance in the psf for a given off axis source position and also for convolving at
-different spatial points in the optics cross section.
+The convolution currently only has one point spread function which was obtained from 
+measuring the point spread function for the on-axis position and fitting this with 
+three gaussians. (See the preamble of get_psf_map.pro for details).
 
 
 WARNING: Run time is dependent on the size of the FOV. The default FOV is 150x150 pixels,
 or 2.5'x2.5', this runs in a few seconds. Simulating the entire FOXSI FOV (~16.5'x16.5')
-will take ~9 Hours.
+will take ~10 minutes.
 
 
 Peripheral Functions:
-- foxsi_get_source_map.pro                      (located in /response folder)
-- foxsi_get_psf_array.pro                       (located in /response folder)
+- foxsi_get_default_source_map.pro            (located in /response folder)
+- foxsi_get_psf_map.pro                       (located in /response folder)
 
 
 
 foxsi_get_output_image_cube.pro                       (located in /response folder)
--------------------
+-------------------------------
 
->> Requires make_map,plot_map, add_tag functions.
+>> Requires MAKE_MAP, PLOT_MAP, ADD_TAG functions.
 
-This function is intended to simulate the image measured by the FOXSI detectors for a
-given input source with spectral information.
+This function simulates imaging spectroscopy for the FOXSI optics/detectors for a
+given input source that includes energy information.  The input source should be a 
+plot_map array with each array element containing the source image in a particular 
+energy bin.  The energies must be designated in the structure using the tags 
+ENERGY_BIN_LOWER_BOUND_KEV and ENERGY_BIN_UPPER_BOUND_KEV.  The function 
+FOXSI_MAKE_SOURCE_STRUCTURE can be used to add these tags, or the requisite info can 
+be passed to the main function.
 
-For each energy slice, each pixels flux (integrated in time) is multiplied by an effective area obtained from the function foxsi_get_effective_area and interpolated to match the energy value of the input source slice. This slice is then processed identically to the monochromatic case described above under foxsi_get_default_2d_image.pro.
+It is assumed that values in the source map are in units of photons/cm2.
 
-The function may be called with a default spectral cube and default pixelisation ( 3'' per pixel). 
+For each map, the source fluxes are multiplied by the effective area obtained from the 
+function FOXSI_GET_EFFECTIVE_AREA and interpolated to match the energy bins of the input 
+source.  Each map is then processed identically to the monochromatic case described above 
+under foxsi_get_output_2d_image.pro.
 
-    IDL> rebinned_convolved_maps = foxsi_get_spectral_image()
+The function may be called with a default source (containing image and spectral info) by:
 
-The default cube is generated by the peripheral function foxsi_get_default_source_cube.pro. This is a stack of 100x100 flux maps with energies from 1.0 to 60.0 KeV with each slice 2.0 KeV apart. The sources present are two gaussians either side of the centre of the FOV. The left one has a constant energy profile while the other decays exponentially.
+    IDL> out_maps = foxsi_get_output_image_cube()
+    IDL> plot_map, out_map
+
+The default source is generated by the peripheral function 
+FOXSI_GET_DEFAULT_SOURCE_CUBE.PRO. This is a stack of 100"x100" flux maps with energies 
+from 1.0 to 60.0 KeV in 2 keV bins.  The sources are two gaussians placed 50" apart 
+with different spectra (constant in energy for one, decaying exponentially with energy 
+for the other).
 
 To run the code with your own source data, please provide:
 
-  >> An array of 2d maps at evenly spaced energies (to be discussed)
-  >> The energy value of the lower bound of the lowest energy bin of your data 
-  >> The energy value of the upper bound of the highest energy bin of your data
+  >> An array of 2d maps using keyword SOURCE_MAP_SPECTRUM
 
-Then run the code with the line
+and one of these two options:
 
-    IDL> rebinned_convolved_maps = get_foxsi_output_image_cube("your_source_cube",bin_min =   $
-    'Lowest energy bound', bin_max = 'Highest energy bound', px = "Your Pixelisation Value")
+  (Option 1)
+  >> The lower edge of the lowest energy bin, using keyword E_MIN
+  >> The upper edge of the highest energy bin, using keyword E_MAX
+	In this usage, the energy array is assumed evenly spaced between these values.
+  	 
+  (Option 2)
+  >> An array of the energy bin edges using keyword BIN_EDGES_ARRAY.  In this usage, 
+		 any array of energies can be used.
 
-The code then assigns each energy slice a corresponding upper and lower energy value assuming a constant bin size across the spectrum. This is done with the peripheral function foxsi_make_source_structure.pro and uses the add_tag function.
+The following example creates a 2D Gaussian source and uses energy bins from 3-40 keV.)
 
-The output is an array of structures as above, each slice may be viewed with:
-
-    IDL>  plot_map, rebinned_convolved_maps[i]
-
-While the spectra for a given pixel (x,y) may be plotted against the midpoint energy of each bin with the line:
-
-    IDL> plot, (rebinned_convolved_maps.bin_min + rebinned_convolved_maps.bin_max)/2, $ rebinned_convolved_maps.data[x,y,*]
-
-Note: The convolution currently only has one point spread function which was obtained from measuring
-the point spread function for the on-axis position (<< note, currently off axis measurement used,
-waiting for on axis fitting parameters >>) and fitting this with three gaussians. (See the preamble
-of get_psf_array.pro for details). Future iterations of this code will include some functionality
-to include variance in the psf for a given off axis source position and also for convolving at
-different spatial points in the optics cross section.
+		IDL> src = make_map( psf_gaussian(fwhm=2, npixel=100) )
+		IDL> src = replicate( src, 37 )
+    IDL> out_maps = foxsi_get_output_image_cube( source=src, e_min = 3, e_max=40 )
+    IDL> movie_map, out_maps
 
 
-WARNING: Run time is dependent on the size of the FOV and number of spectral intervals. At testing, a grid of 100x100 pixels will be processed at ~0.5s per spectral slice.
+While the spectra for a given pixel (x,y) may be plotted against the midpoint energy of 
+each bin with the line:
+
+		IDL> energy = average( [[out_maps.ENERGY_BIN_LOWER_BOUND_KEV],[out_maps.ENERGY_BIN_UPPER_BOUND_KEV]],2 )
+    IDL> plot, energy, out_maps.data[x,y,*]
+
+Note: The convolution currently only has one point spread function which was obtained 
+from measuring the point spread function for the on-axis position and fitting this with 
+three gaussians. (See the preamble of foxsi_get_psf_map.pro for details). Future 
+iterations of this code will include some functionality to include variance in the psf 
+for a given off axis source position and also for convolving at different spatial points 
+in the optics cross section.
+
+
+WARNING: Run time is dependent on the size of the FOV and number of spectral intervals. 
+At testing, a grid of 100x100 pixels will be processed at ~0.5s per spectral slice.
 
 
 Peripheral Functions:
-- get_source_map.pro                      (located in /response folder)
-- get_psf_array.pro                       (located in /response folder)
+- foxsi_get_default_source_cube.pro                      (located in /response folder)
+- foxsi_get_psf_map.pro                       (located in /response folder)
 - foxsi_get_effective_area.pro            (located in /response folder)
 - foxsi_make_source_structure.pro         (located in /response folder)
