@@ -39,21 +39,21 @@ al_legend, ['Single module','Three modules'], line=[1,0], thick=3
 
 !p.multi=[0,1,2]
 
-; HXR source (example isothermal flare):
-t_flare  = 15			; flare temperature in MK
-em_flare = 1.d48	; flare emission measure in cm^-3
-energy_2D = get_edges( findgen(50)+1.5, /edges_2 )		; edges of energy bins
-energy = get_edges( energy_2D, /mean )
-flux = f_vth( energy_2D, [em_flare/1.d49, t_flare/11.6, 1.] )
-plot, energy, flux, /xlog, /ylog, thick=3, xtitle='Energy [keV]', $
-	ytitle='Photon flux [s!U-1!N cm!U-2!N keV!U-1!N]', $
-	title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
+IDL> ; HXR source (example isothermal flare):
+IDL> t_flare  = 15   ; flare temperature in MK
+IDL> em_flare = 1.d48 ; flare emission measure in cm^-3
+IDL> energy_2D = get_edges( findgen(50)+1.5, /edges_2 )  ; edges of energy bins
+IDL> energy = get_edges( energy_2D, /mean )
+IDL> flux = f_vth( energy_2D, [em_flare/1.d49, t_flare/11.6, 1.] )
+IDL> plot, energy, flux, /xlog, /ylog, thick=3, xtitle='Energy [keV]', $
+IDL>  ytitle='Photon flux [s!U-1!N cm!U-2!N keV!U-1!N]', $
+IDL>  title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
 
-; Fold through the diagonal FOXSI response using full 3 modules.
-area = foxsi_get_effective_area( energy_arr=energy )
-counts = area.eff_area_cm2 * flux
-plot, energy, counts, /xlog, /ylog, psym=10, thick=3, xtitle='Energy [keV]', $
-	ytitle='FOXSI counts [s!U-1!N keV!U-1!N]', $
-	title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
+IDL> ; Fold through the diagonal FOXSI response using full 3 modules.
+IDL> area = foxsi_get_effective_area( energy_arr=energy )
+IDL> counts = area.eff_area_cm2 * flux
+IDL> plot, energy, counts, /xlog, /ylog, psym=10, thick=3, xtitle='Energy [keV]', $
+IDL>  ytitle='FOXSI counts [s!U-1!N keV!U-1!N]', $
+IDL>  title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
 
 !p.multi=0
