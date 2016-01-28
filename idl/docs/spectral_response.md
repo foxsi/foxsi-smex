@@ -30,6 +30,14 @@ plot, area.energy_kev, area.eff_area_cm2, /xlog, /ylog, yrange=[1.,1.e3], $
 oplot, area.energy_kev, area.eff_area_optic_cm2, line=1, thick=3
 al_legend, ['Single module','Three modules'], line=[1,0], thick=3
 
+The effect of various attenuator states can be included by using the keyword SHUTTER_STATE 
+in the foxsi_get_effective_area routine.  SHUTTER_STATE can take on the values 0,1,2 
+as defined by:
+;           shutter_state -
+;               0 no shutter
+;               1 is thin shutter in  (1.0 mm)
+;               2 is thick shutter in	(1.5 mm)
+
 
 ;
 ; Example: Determine the FOXSI count spectrum for a specified hard X-ray distribution.
