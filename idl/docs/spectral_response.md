@@ -65,3 +65,34 @@ IDL>  ytitle='FOXSI counts [s!U-1!N keV!U-1!N]', $
 IDL>  title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
 
 !p.multi=0
+
+;
+; Using attenuators (shutters)
+; You can use predefined attenuator states (0,1,2; SHUTTER_STATE keyword) or you can 
+; specify the exact attenuator thickness you'd like to use (SHUTTER_THICKNESS_MM keyword).
+; Shutters are aluminum, but other materials can be added on request.
+;
+
+; Example with no shutter.  Specify nothing.
+area  = foxsi_get_effective_area( )
+plot,  area.energy_kev, area.eff_area_cm2  
+
+; Example: specify shutters by predefined state:
+; States are 0: no shutter, 1: 1 mm, 2: 1.5 mm
+area0 = foxsi_get_effective_area( shutter_state=0. )
+area1 = foxsi_get_effective_area( shutter_state=1. )
+area2 = foxsi_get_effective_area( shutter_state=2. )
+plot,  area0.energy_kev, area0.eff_area_cm2  
+oplot, area1.energy_kev, area1.eff_area_cm2  
+oplot, area2.energy_kev, area2.eff_area_cm2  
+
+; Example: specify shutters by exact thickness in mm:
+areaA = foxsi_get_effective_area( shutter_thick_mm=0. )
+areaB = foxsi_get_effective_area( shutter_thick_mm=1. )
+areaC = foxsi_get_effective_area( shutter_thick_mm=2. )
+areaD = foxsi_get_effective_area( shutter_thick_mm=3. )
+plot,  areaA.energy_kev, areaA.eff_area_cm2  
+oplot, areaB.energy_kev, areaB.eff_area_cm2  
+oplot, areaC.energy_kev, areaC.eff_area_cm2  
+oplot, areaD.energy_kev, areaD.eff_area_cm2  
+
