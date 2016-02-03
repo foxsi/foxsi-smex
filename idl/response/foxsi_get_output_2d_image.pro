@@ -138,9 +138,13 @@ ENDIF
 ;;; equal to the value of the px keyword (default = 3'' per pixel)
 ;;; The centre of the map is preserved as the centre of the source image
 
+;rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = pix_size,   $
+;                         xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS(          $
+;                         'Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL))
+
+; Version with simpler map ID:
 rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = pix_size,   $
-                         xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS(          $
-                         'Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL))
+                         xc = source_map.xc, yc = source_map.yc, id = 'FOXSI counts')
 
 output_dims = SIZE(rebinned_convolved_map.data,/DIM)
 

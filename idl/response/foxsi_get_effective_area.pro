@@ -24,7 +24,7 @@
 ;
 
 FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
-    SHUTTER_STATE = shutter_state, POSITION=position
+    SHUTTER_STATE = shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, POSITION=position
 
     default, shutter_state, 0
     default, position, [0, 0]
@@ -41,7 +41,7 @@ FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
     ENDELSE
     detector = foxsi_get_detector_efficiency(energy_arr = energy_arr)
     blanket = foxsi_get_blanket_transmission(energy_arr = energy_arr)
-    shutter = foxsi_get_shutter_transmission(shutter_state, energy_arr = energy_arr)
+    shutter = foxsi_get_shutter_transmission(shutter_state, energy_arr = energy_arr, _extra=_extra)
 
     eff_area_cm2 = optics_eff_area.eff_area_cm2 * detector.absorption * blanket.transmission * shutter.transmission
     eff_area_cm2_optic = optics_eff_area.eff_area_optic_cm2 * detector.absorption * blanket.transmission * shutter.transmission
