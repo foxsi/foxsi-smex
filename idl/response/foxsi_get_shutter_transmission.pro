@@ -26,7 +26,7 @@
 ;
 
 FUNCTION foxsi_get_shutter_transmission, shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, $
-																				 ENERGY_ARR = energy_arr, PLOT = plot, _EXTRA =_extra
+				 ENERGY_ARR = energy_arr, PLOT = plot, _EXTRA =_extra
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
