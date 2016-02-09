@@ -18,6 +18,8 @@ elements are not included.
 
 Don't forget to run @foxsi-smex-setup-script before trying the routines.
 
+```
+
 ;
 ; Example: Plot the effective area for all 3 FOXSI modules.
 ;
@@ -38,6 +40,9 @@ as defined by:
 ;               1 is thin shutter in  (1.0 mm)
 ;               2 is thick shutter in	(1.5 mm)
 
+```
+
+```
 
 ;
 ; Example: Determine the FOXSI count spectrum for a specified hard X-ray distribution.
@@ -65,6 +70,10 @@ IDL>  ytitle='FOXSI counts [s!U-1!N keV!U-1!N]', $
 IDL>  title='Flare T=15 MK, EM=1.e49 cm!U-3!N'
 
 !p.multi=0
+
+```
+
+```
 
 ;
 ; Using attenuators (shutters)
@@ -96,3 +105,4 @@ oplot, areaB.energy_kev, areaB.eff_area_cm2
 oplot, areaC.energy_kev, areaC.eff_area_cm2  
 oplot, areaD.energy_kev, areaD.eff_area_cm2  
 
+```
