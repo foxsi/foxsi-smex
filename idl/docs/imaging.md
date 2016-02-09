@@ -134,10 +134,8 @@ While the spectra for a given pixel (x,y) may be plotted against the midpoint en
 each bin with the line:
 
 ```
-
-		IDL> energy = average( [[out_maps.ENERGY_BIN_LOWER_BOUND_KEV],[out_maps.ENERGY_BIN_UPPER_BOUND_KEV]],2 )
-    IDL> plot, energy, out_maps.data[x,y,*]
-
+IDL> energy = average( [[out_maps.ENERGY_BIN_LOWER_BOUND_KEV],[out_maps.ENERGY_BIN_UPPER_BOUND_KEV]],2 )
+IDL> plot, energy, out_maps.data[x,y,*]
 ```
 
 Note: The convolution currently only has one point spread function which was obtained 
