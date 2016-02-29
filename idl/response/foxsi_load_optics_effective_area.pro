@@ -22,12 +22,12 @@ FUNCTION foxsi_load_optics_effective_area
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids
 
-    data_filename = 'effective_area_per_shell.csv'
+    data_filename = 'effective_area_per_module.csv'
     path = foxsi_data_path + data_filename
     ;path = '../../data/' + data_filename
 
-    number_of_columns = 51
-    number_of_rows = 506
+    number_of_columns = 55
+    number_of_rows = 3
 
     OPENR, lun, path, /GET_LUN
     header = strarr(1)

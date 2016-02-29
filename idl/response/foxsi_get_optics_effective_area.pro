@@ -40,9 +40,9 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     eff_area_orig_cm2 = fltarr(n_elements(energy_orig_kev))
 
     ; add up all of the areas for each of the included optics shells
-    FOR i = 0, n_elements(foxsi_shell_ids)-1 DO BEGIN
-        eff_area_orig_cm2 += data[foxsi_shell_ids[i]-1, *]
-    ENDFOR
+    ;FOR i = 0, n_elements(foxsi_shell_ids)-1 DO BEGIN
+    ;    eff_area_orig_cm2 += data[foxsi_shell_ids[i]-1, *]
+    ;ENDFOR
 
     ; include loss of area due to optics mounting structure
     eff_area_orig_cm2 = eff_area_orig_cm2 * 0.9

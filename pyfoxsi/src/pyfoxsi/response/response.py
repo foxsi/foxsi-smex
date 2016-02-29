@@ -25,8 +25,10 @@ class Response(object):
 
     Parameters
     ----------
-    shutter_state : int
+    shutter_state : int, default 0
         A number representing the state of the shutter (0 - no shutter, 1 - thin shutter, 2 - thick shutter)
+    focal_length : int, default 15
+        Choose the focal length (10 - 10 meters, 15 - 15 meters)
 
     Examples
     --------
@@ -34,24 +36,30 @@ class Response(object):
     >>> resp = Response()
     >>> resp1 = Response(shutter_state=1)
     """
-    def __init__(self, shutter_state=0):
+    def __init__(self, shutter_state=0, focal_length=None):
         path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):
             path = os.path.dirname(path)
         path = os.path.join(path, 'data/')
-        filename = 'effective_area_per_shell.csv'
+        filename = 'effective_area_per_module.csv'
         effarea_file = os.path.join(path, filename)
-        self._eff_area_per_shell = pd.read_csv(effarea_file, index_col=0)
+        optics_effective_area = pd.read_csv(effarea_file, index_col=0, skiprows=4)
+        if focal_length is None:
+            optics_effective_area = optics_effective_area[str(pyfoxsi.focal_length)].copy()
+        else:
+            optics_effective_area = optics_effective_area[str(focal_length * u.m)].copy()
+        self.optics_effective_area = pd.DataFrame(dict(total=optics_effective_area.copy(),
+                                                       module=optics_effective_area.copy()))
         # find what shells are missing
-        shell_numbers = np.array(self._eff_area_per_shell.columns, np.uint)
-        missing_shells = np.setdiff1d(shell_numbers, pyfoxsi.shell_ids)
+        #shell_numbers = np.array(self._eff_area_per_shell.columns, np.uint)
+        #missing_shells = np.setdiff1d(shell_numbers, pyfoxsi.shell_ids)
         # remove the missing shells
         self.__number_of_telescopes = 1
-        for missing_shell in missing_shells:
-            self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
+        #for missing_shell in missing_shells:
+        #    self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
         # now add the effective area of all of the shells together
-        self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
-        self.effective_area = self.optics_effective_area.copy()
+        #self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
+        self.effective_area = pd.DataFrame(dict(total=self.optics_effective_area['total'].copy(), module=self.optics_effective_area['module'].copy()))
         self.number_of_telescopes = pyfoxsi.number_of_telescopes
         self._set_default_optical_path()
         if shutter_state > 0:

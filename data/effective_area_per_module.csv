@@ -2,7 +2,7 @@
 # energy in keV
 # effective area in cm^2
 # to get total effective area multiple by 3 (the default number of modules)
-energy, 15m, 10m
+energy,15.0 m,10.0 m
 1,22.35,34.85
 2,22.01,34.13
 3,21.52,33.12
