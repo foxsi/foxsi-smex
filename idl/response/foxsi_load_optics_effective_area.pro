@@ -26,7 +26,7 @@ FUNCTION foxsi_load_optics_effective_area
     path = foxsi_data_path + data_filename
     ;path = '../../data/' + data_filename
 
-    number_of_rows = 3
+    number_of_rows = 4
     number_header_lines = 5
     number_lines = FILE_LINES(path)
     number_data_lines = number_lines - number_header_lines - 10
@@ -37,7 +37,7 @@ FUNCTION foxsi_load_optics_effective_area
     data = fltarr(number_of_rows, number_data_lines)
     readf, lun, data
     free_lun, lun
-    result = create_struct('energy_keV', data[0, *], 'eff_area_cm2_1', data[1, *], 'eff_area_cm2_2', data[2, *])
+    result = create_struct('energy_keV', data[0, *], 'eff_area_cm2_1', data[1, *], 'eff_area_cm2_2', data[2, *], 'eff_area_cm2_3', data[3, *])
 
     RETURN, result
 END

@@ -14,6 +14,10 @@
 ; KEYWORDS :
 ;			plot - if true then plot to the screen
 ;           position - the position in the field of view (default is [0,0] On-axis)
+;           configuration - the configuration of the optics
+;               1 : 15 meters
+;               2 : 10 meters 3 modules
+;               3 : 10 meters 2 modules
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV
@@ -24,7 +28,9 @@
 ;
 
 FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
-    SHUTTER_STATE = shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, POSITION=position
+    SHUTTER_STATE = shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, POSITION=position, CONFIGURATION = configuration
+
+    default, configuration, 1
 
     default, shutter_state, 0
     default, position, [0, 0]
