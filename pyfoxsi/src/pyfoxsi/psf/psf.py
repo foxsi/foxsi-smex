@@ -113,7 +113,7 @@ def multi_gauss2d((x,y), amplitude, center, sigma_x, sigma_y, theta):
         i += 1
     return result
 
-def psf(x, y, scale=1 * u.arcsec / u.pix, oversample=1):
+def psf(x, y, scale=1 * u.arcsec / u.pix, oversample=1, size=None):
     r"""The point spread function.
 
     .. warning: implement the x and y keywords are not yet implemented.
@@ -161,9 +161,9 @@ def psf(x, y, scale=1 * u.arcsec / u.pix, oversample=1):
     print(width)
     # add 90 deg to the polar angle to make the rotation angle perpendicular
     # to the polar angle
-    kernel = amplitude[0] * Gaussian2DKernel(width[0].value, mode='oversample', factor=oversample) * width[0].value ** 2 +\
-             amplitude[1] * Gaussian2DKernel(width[1].value, mode='oversample', factor=oversample) * width[1].value ** 2  +\
-             amplitude[2] * Gaussian2DKernel(width[2].value, mode='oversample', factor=oversample) * width[2].value ** 2
+    kernel = amplitude[0] * Gaussian2DKernel(width[0].value, mode='oversample', factor=oversample, x_size=size) * width[0].value ** 2 +\
+             amplitude[1] * Gaussian2DKernel(width[1].value, mode='oversample', factor=oversample, x_size=size) * width[1].value ** 2  +\
+             amplitude[2] * Gaussian2DKernel(width[2].value, mode='oversample', factor=oversample, x_size=size) * width[2].value ** 2
     kernel.normalize()
     return kernel
 
