@@ -140,7 +140,8 @@ upper_array = source_map_spectrum.energy_bin_upper_bound_keV
 lower_array = source_map_spectrum.energy_bin_lower_bound_keV
 spec_res    = upper_array[0] - lower_array[0]
 
-print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
+; Only print spectral resolution if constant energy binning is used.
+if array_mode eq 0 then print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
 
 
 ;; Obtain effective_area energy profile using foxsi_get_effective_area function
@@ -250,6 +251,9 @@ IF inaccurate2 EQ 1 THEN BEGIN
 
   FOR k = 0.0, N_ELEMENTS(source_energy_range)-1 DO BEGIN
 
+		; If we've gone above the energy range of the FOXSI response, then stop.
+		if source_energy_range[k] gt max( energy_interpol ) then break
+
     arg = energy_interpol - source_energy_range[k]
     find = WHERE(ABS(arg) LT 0.100)
     find2 = arg[WHERE(arg LT 0.100)]
@@ -278,13 +282,19 @@ ENDIF
 
 
 for layer = 0, n_elements(source_map_spectrum) - 1 do begin
+
+	print, 'Processing map ', lower_array[layer], upper_array[layer], ' keV'
+
   ; Convert the source map from photons to counts
   this_map = source_map_spectrum[layer]
   this_map.data *= eff_area_values[layer]
 
   ; Generate the convolved image, with noise if desired
-  this_map = foxsi_get_output_2d_image(source_map=this_map,$
+  this_map = foxsi_get_output_2d_image(source_map=this_map, /quiet, $
                                        px=pix_size, no_count_stats=no_count_stats, oversample_psf=oversample_psf)
+
+	; Add energy info to map ID
+	this_map.id += ' '+strtrim( average( [lower_array[layer],upper_array[layer]] ), 2)+' keV
 
   ; Append the new map to the output map cube
   this_map = add_tag(this_map, lower_array[layer], 'energy_bin_lower_bound_keV')

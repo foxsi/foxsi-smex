@@ -32,6 +32,7 @@
 ;;;                                accounted for
 ;;;               oversample_psf - degree of oversampling to produce a more
 ;;;                                accurate PSF. Default is 1 (no oversampling)
+;;;								quiet - Don't print out progress.
 ;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default source array is 
@@ -44,7 +45,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_count_stats = no_count_stats,$
-  oversample_psf=oversample_psf
+  oversample_psf=oversample_psf, quiet=quiet
 
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
@@ -65,7 +66,7 @@ dims   = SIZE(source_map.data, /DIM)
 x_size = dims[0]  ;;; Get dimensions of FOV in pixels
 y_size = dims[1]
 
-print, strcompress('Source_Array_is_'+string(x_size) $
+if not keyword_set( quiet ) then print, strcompress('Source_Array_is_'+string(x_size) $
        +'x'+string(y_size)+'_Pixels', /REMOVE_AL)
 
 ;;; Obtain psf assuming constant across FOV
@@ -101,7 +102,8 @@ FOR y = 0, y_size-1 DO BEGIN
 
        
       ;;; Progress monitor - run time is still long for large (>150'x150') FOV sizes 
-      IF x eq 0 THEN print, STRCOMPRESS("Image_Row_"+string(FIX(y+1))+"_of_"    $
+      IF x eq 0 and not keyword_set( QUIET ) THEN $
+      											 print, STRCOMPRESS("Image_Row_"+string(FIX(y+1))+"_of_"    $
                              +string(FIX(y_size))+"_completed", /REMOVE_AL)
 
    ENDFOR
@@ -136,9 +138,9 @@ ENDIF
 ;;; equal to the value of the px keyword (default = 3'' per pixel)
 ;;; The centre of the map is preserved as the centre of the source image
 
+; Simple map ID:
 rebinned_convolved_map = make_map(rebinned_convolved_array, dx = pix_size, dy = pix_size,   $
-                         xc = source_map.xc, yc = source_map.yc, id = STRCOMPRESS(          $
-                         'Rebinned_Convolved_Map_Pixel_Size:'+string(pix_size),/REMOVE_AL))
+                         xc = source_map.xc, yc = source_map.yc, id = 'FOXSI counts')
 
 output_dims = SIZE(rebinned_convolved_map.data,/DIM)
 

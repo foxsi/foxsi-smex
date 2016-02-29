@@ -17,4 +17,4 @@ the code.
 
 Documentation
 -------------
-All documentation can be found in the /docs folder.
+All documentation, including examples and walk-throughs, can be found in the /docs folder.
