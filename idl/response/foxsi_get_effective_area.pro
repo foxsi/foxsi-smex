@@ -42,7 +42,7 @@ FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
     IF keyword_set(energy_arr) THEN BEGIN
         optics_eff_area = foxsi_get_optics_effective_area(energy_arr = energy_arr, position=position, configuration=configuration)
     ENDIF ELSE BEGIN
-        optics_eff_area = foxsi_get_optics_effective_area(, position=position, configuration=configuration)
+        optics_eff_area = foxsi_get_optics_effective_area(position=position, configuration=configuration)
         energy_arr = optics_eff_area.energy_keV
     ENDELSE
     detector = foxsi_get_detector_efficiency(energy_arr = energy_arr)

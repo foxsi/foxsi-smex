@@ -27,8 +27,11 @@ class Response(object):
     ----------
     shutter_state : int, default 0
         A number representing the state of the shutter (0 - no shutter, 1 - thin shutter, 2 - thick shutter)
-    focal_length : int, default 15
-        Choose the focal length (10 - 10 meters, 15 - 15 meters)
+    configuration : int, default 1
+        Choose the optics configuration
+            1 : 15 meters
+            2 : 10 meters 3 modules
+            3 : 10 meters 2 modules
 
     Examples
     --------
@@ -45,12 +48,17 @@ class Response(object):
         effarea_file = os.path.join(path, filename)
         optics_effective_area = pd.read_csv(effarea_file, index_col=0, skiprows=4)
         optics_effective_area = optics_effective_area[optics_effective_area.columns[configuration-1]]
-        pyfoxsi.focal_length = 15 * u.m
-        pyfoxsi.number_of_telescopes = 3
-        if configuration > 1:
+
+        if configuration == 1:
             pyfoxsi.focal_length = 10 * u.m
-        if configuration > 2:
+            pyfoxsi.number_of_telescopes = 3
+        elif configuration == 2:
+            pyfoxsi.focal_length = 10 * u.m
+            pyfoxsi.number_of_telescopes = 3
+        elif configuration == 3:
             pyfoxsi.number_of_telescopes = 2
+            pyfoxsi.focal_length = 15 * u.m
+
         self.optics_effective_area = pd.DataFrame(dict(total=optics_effective_area.copy(),
                                                        module=optics_effective_area.copy()))
         # find what shells are missing
@@ -116,7 +124,7 @@ class Response(object):
         """Add the effect of the optical path to the effective area"""
         energies = np.array(self.optics_effective_area.index)
         # Remove 10% of flux due to spiders
-        factor = np.ones(energies.shape) * 0.9
+        factor = np.ones_like(energies) * 0.9
         # Apply all of the materials in the optical path to factor
         for material in self.optical_path:
             print(material.name)
