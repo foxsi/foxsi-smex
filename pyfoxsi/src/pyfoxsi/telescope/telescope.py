@@ -9,6 +9,7 @@ from astropy.units import Unit
 import os.path
 import numpy as np
 
+
 class Optic(object):
     """A FOXSI Optic class definition."""
     def __init__(self):
