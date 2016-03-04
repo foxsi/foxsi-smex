@@ -50,14 +50,14 @@ class Response(object):
         optics_effective_area = optics_effective_area[optics_effective_area.columns[configuration-1]]
 
         if configuration == 1:
-            pyfoxsi.focal_length = 10 * u.m
+            pyfoxsi.focal_length = 15 * u.m
             pyfoxsi.number_of_telescopes = 3
         elif configuration == 2:
             pyfoxsi.focal_length = 10 * u.m
             pyfoxsi.number_of_telescopes = 3
         elif configuration == 3:
+            pyfoxsi.focal_length = 10 * u.m
             pyfoxsi.number_of_telescopes = 2
-            pyfoxsi.focal_length = 15 * u.m
 
         self.optics_effective_area = pd.DataFrame(dict(total=optics_effective_area.copy(),
                                                        module=optics_effective_area.copy()))
