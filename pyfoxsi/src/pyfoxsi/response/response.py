@@ -130,9 +130,9 @@ class Response(object):
             print(material.name)
             if material.name == pyfoxsi.detector_material:
                 # if it is the detector than we want the absorption
-                factor *= factor * material.absorption(energies)
+                factor *= material.absorption(energies)
             else:
-                factor *= factor * material.transmission(energies)
+                factor *= material.transmission(energies)
         self.effective_area['factor'] = factor
         self.effective_area['total'] = factor * self.optics_effective_area['total']
         self.effective_area['module'] = factor * self.optics_effective_area['module']
