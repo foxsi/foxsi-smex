@@ -42,8 +42,14 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     eff_area_orig_cm2 = fltarr(n_elements(energy_orig_kev))
 
     CASE configuration OF
-        1: eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
-        2: eff_area_orig_cm2 = eff_area_data.eff_area_cm2_2
+        1: BEGIN
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
+            foxsi_number_of_modules = 3
+        END
+        2: BEGIN
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_2
+            foxsi_number_of_modules = 3
+        END
         3: BEGIN
             eff_area_orig_cm2 = eff_area_data.eff_area_cm2_3
             foxsi_number_of_modules = 2
