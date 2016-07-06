@@ -45,7 +45,7 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
             foxsi_number_of_modules = 2
         END
  
-        ELSE: PRINT, 'Configuration not found'
+        ELSE: PRINT, 'Only configuration = 1 is allowed'
     ENDCASE
 
     ; add up all of the areas for each of the included optics shells
