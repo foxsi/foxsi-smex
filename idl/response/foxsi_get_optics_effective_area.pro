@@ -26,9 +26,7 @@
 ;
 
 FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
-    POSITION = position, CONFIGURATION = configuration
-
-    default, configuration, 1
+    POSITION = position
 
 	; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
@@ -39,14 +37,10 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     energy_orig_kev = eff_area_data.energy_kev
     eff_area_orig_cm2 = fltarr(n_elements(energy_orig_kev))
 
-    CASE configuration OF
-        1: BEGIN
-            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
-            foxsi_number_of_modules = 2
-        END
- 
-        ELSE: PRINT, 'Only configuration = 1 is allowed'
-    ENDCASE
+
+    eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
+    foxsi_number_of_modules = 2
+  
 
     ; add up all of the areas for each of the included optics shells
     ;FOR i = 0, n_elements(foxsi_shell_ids)-1 DO BEGIN
