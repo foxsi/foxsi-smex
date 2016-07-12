@@ -106,10 +106,10 @@ ENDELSE
 
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
-RESOLVE_ROUTINE, 'foxsi_get_output_2d_image', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_get_output_2d_image', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_get_default_source_cube', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_get_effective_area', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_make_source_structure', /IS_FUNCTION
 
 
 ;;;If source_map_cube provided, create structure with spectral information
