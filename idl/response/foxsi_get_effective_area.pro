@@ -15,9 +15,7 @@
 ;			plot - if true then plot to the screen
 ;           position - the position in the field of view (default is [0,0] On-axis)
 ;           configuration - the configuration of the optics
-;               1 : 15 meters
-;               2 : 10 meters 3 modules
-;               3 : 10 meters 2 modules
+;               1 : 14 meters, 2 modules, 20 shells (2016/07/05)
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV
@@ -28,9 +26,7 @@
 ;
 
 FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
-    SHUTTER_STATE = shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, POSITION=position, CONFIGURATION = configuration
-
-    default, configuration, 1
+    SHUTTER_STATE = shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, POSITION=position
 
     default, shutter_state, 0
     default, position, [0, 0]
@@ -40,9 +36,9 @@ FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
         foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
 
     IF keyword_set(energy_arr) THEN BEGIN
-        optics_eff_area = foxsi_get_optics_effective_area(energy_arr = energy_arr, position=position, configuration=configuration)
+        optics_eff_area = foxsi_get_optics_effective_area(energy_arr = energy_arr, position=position)
     ENDIF ELSE BEGIN
-        optics_eff_area = foxsi_get_optics_effective_area(position=position, configuration=configuration)
+        optics_eff_area = foxsi_get_optics_effective_area(position=position)
         energy_arr = optics_eff_area.energy_keV
     ENDELSE
     detector = foxsi_get_detector_efficiency(energy_arr = energy_arr)
