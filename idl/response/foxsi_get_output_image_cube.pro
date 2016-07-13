@@ -3,6 +3,7 @@
 ;;;
 ;;;HISTORY:       Initial Commit - 08/25/15 - Samuel Badman
 ;;;               Improved Convolution Method - 08/31/15 - Samuel Badman               
+;;;               Added warnings for "too high" count rates -- 7/12/2016 -- Lindsay Glesener
 ;;;
 ;;;DESCRIPTION:   Function which takes a simulated event (an array of
 ;;;               flux maps at different energy values) and obtains a
@@ -70,7 +71,13 @@ FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,
                                       e_min = e_min, e_max = e_max, px =  pix_size, $
                                       bin_edges_array = bin_edges_array,            $
                                       no_count_stats = no_count_stats,              $
-                                      oversample_psf = oversample_psf
+                                      oversample_psf = oversample_psf, 							$
+                                      shutter_state = shutter_state, stop = stop
+
+COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
+    foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
+    foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
+    foxsi_default_rate_limit_pixel, foxsi_default_rate_limit_detector
 
 upper_lower_bound_mode = 0
 array_mode = 0
@@ -146,7 +153,7 @@ if array_mode eq 0 then print, "Spectral Resolution (keV/Energy_Bin) ="+string(s
 
 ;; Obtain effective_area energy profile using foxsi_get_effective_area function
 
-eff_area = foxsi_get_effective_area()
+eff_area = foxsi_get_effective_area( SHUTTER_STATE = SHUTTER_STATE )
 
 ;; Pull in eff_area tags as variables
 
@@ -255,8 +262,9 @@ IF inaccurate2 EQ 1 THEN BEGIN
 		if source_energy_range[k] gt max( energy_interpol ) then break
 
     arg = energy_interpol - source_energy_range[k]
-    find = WHERE(ABS(arg) LT 0.100)
-    find2 = arg[WHERE(arg LT 0.100)]
+		; LG 7/12/2016  Eased up this requirement from 0.1 to 0.2.
+    find = WHERE(ABS(arg) LE 0.200)
+    find2 = arg[WHERE(arg LE 0.200)]
     IF N_ELEMENTS(find) EQ 1 THEN BEGIN
        IF find eq -1 THEN BEGIN
        inaccurate3 = 1
@@ -301,6 +309,37 @@ for layer = 0, n_elements(source_map_spectrum) - 1 do begin
   this_map = add_tag(this_map, upper_array[layer], 'energy_bin_upper_bound_keV')
   output_map_cube = append_arr(output_map_cube, this_map, /no_copy)
 endfor
+
+;
+; Check to see if we've exceeded any of the thresholds (per detector or per pixel).
+; If so, print a warning and encourage attenuator use!
+;
+
+total_data = total(output_map_cube.data, 3)
+ 
+if max( total_data ) gt foxsi_default_rate_limit_detector or $
+	 total( total_data ) gt foxsi_default_rate_limit_pixel then begin
+
+	print
+	print, '#################################################################'
+	print, '#                                                               #'
+	print, '#  WARNING: If the input source flux is measured in units of    #'
+	print, '#  photons/second, then Detector rates are entering territory   #'
+	print, '#  where nontrivial effects occur.                              #'
+	print
+	print, '#  It is advised to rerun the procedure with an attenuator      #'
+	print, '#  inserted in order to stay in the simple regime.              #'
+	print
+	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+	print, '#  attenuator state options.                                    #'
+	print, '#                                                               #'
+	print, '#################################################################'
+	print
+	 
+endif
+
+if keyword_set( STOP ) then stop
 
 RETURN, output_map_cube
 
