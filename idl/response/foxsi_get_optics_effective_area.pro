@@ -15,9 +15,7 @@
 ;			plot - if true then plot to the screen
 ;           position - the position in the field of view (default is [0,0] On-axis)
 ;           configuration - the configuration of the optics
-;               1 : 15 meters
-;               2 : 10 meters 3 modules
-;               3 : 10 meters 2 modules
+;               1 : 14 meters, 2 modules, 20 shells (2016/07/05)
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV
@@ -28,9 +26,7 @@
 ;
 
 FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
-    POSITION = position, CONFIGURATION = configuration
-
-    default, configuration, 1
+    POSITION = position
 
 	; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
@@ -41,21 +37,10 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     energy_orig_kev = eff_area_data.energy_kev
     eff_area_orig_cm2 = fltarr(n_elements(energy_orig_kev))
 
-    CASE configuration OF
-        1: BEGIN
-            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
-            foxsi_number_of_modules = 3
-        END
-        2: BEGIN
-            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_2
-            foxsi_number_of_modules = 3
-        END
-        3: BEGIN
-            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_3
-            foxsi_number_of_modules = 2
-        END
-        ELSE: PRINT, 'Configuration not found'
-    ENDCASE
+
+    eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
+    foxsi_number_of_modules = 2
+  
 
     ; add up all of the areas for each of the included optics shells
     ;FOR i = 0, n_elements(foxsi_shell_ids)-1 DO BEGIN
