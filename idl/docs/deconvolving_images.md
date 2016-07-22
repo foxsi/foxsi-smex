@@ -34,7 +34,7 @@ matrix = foxsi_define_matrix( source_dim=4*dim, measured_dim = dim, matrix_file=
 ; Now the transformation matrix is computed and saved.  We should not need to repeat that step.
 
 iter = 50		; Choose how many deconvolution iterations to do.
-			; The routine will return all the intermediate iterations.
+				; The routine will return all the intermediate iterations.
 deconv = foxsi_deconv( image, matrix_file=matrix_file, max=iter )
 
 movie_map, deconv, /noscale
