@@ -1,3 +1,4 @@
+```
 ;
 ; Sample script for FOXSI-SMEX image deconvolution
 ;
@@ -42,3 +43,4 @@ movie_map, deconv, /noscale
 ; In the example here, the coronal source structure is probably not to be trusted 
 ; beyond ~10 iterations, while the bright, compact footpoints, with their better 
 ; statistics, can be taken a bit further than that.
+```
