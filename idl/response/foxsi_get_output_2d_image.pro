@@ -50,8 +50,8 @@ FUNCTION foxsi_get_output_2d_image,source_map = source_map, px = pix_size, no_co
 IF N_ELEMENTS(SOURCE_MAP) EQ 0 THEN PRINT, 'No user input detected, using default source image'
 
 ;;;;; Check for updates to peripheral functions for the purposes of testing
-RESOLVE_ROUTINE, 'foxsi_get_psf_map', /IS_FUNCTION
-RESOLVE_ROUTINE, 'foxsi_get_default_source_map', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_get_psf_map', /IS_FUNCTION
+;RESOLVE_ROUTINE, 'foxsi_get_default_source_map', /IS_FUNCTION
 
 ;;;; Define default source_map input in case of no user input
 DEFAULT, source_map, foxsi_get_default_source_map()
