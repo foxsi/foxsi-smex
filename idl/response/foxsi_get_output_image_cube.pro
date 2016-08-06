@@ -4,6 +4,7 @@
 ;;;HISTORY:       Initial Commit - 08/25/15 - Samuel Badman
 ;;;               Improved Convolution Method - 08/31/15 - Samuel Badman               
 ;;;               Added warnings for "too high" count rates -- 7/12/2016 -- Lindsay Glesener
+;;;               Improved rate warnings; added keyword DT -- 8/6/2016 -- LG
 ;;;
 ;;;DESCRIPTION:   Function which takes a simulated event (an array of
 ;;;               flux maps at different energy values) and obtains a
@@ -27,6 +28,9 @@
 ;;;               The output is a structure containing imaged maps at
 ;;;               the inputted energy with appended tags specifying
 ;;;               the energy bin range for each map. 
+;;;               It is assumed the source spectrum is in units of photons/second.
+;;;               To integrate over >1 second, use the time integration
+;;;               keyword DT
 ;;;
 ;;;CALL SEQUENCE: output_map_cube  = foxsi_get_output_image_cube()
 ;;;
@@ -53,6 +57,9 @@
 ;;;               oversample_psf - degree of oversampling to produce a more
 ;;;                                accurate PSF. Default is 1 (no oversampling)
 ;;;
+;;;               dt -- time integration step.  If set, integrate over DT seconds.  
+;;;                     Default is 1 second.
+;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default spatial dimensions are set to 
 ;;;                [100,100] ~1.66' X 1.66' FOV at 1 arcsec per
@@ -72,13 +79,15 @@ FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,
                                       bin_edges_array = bin_edges_array,            $
                                       no_count_stats = no_count_stats,              $
                                       oversample_psf = oversample_psf, 							$
-                                      shutter_state = shutter_state, stop = stop
+                                      shutter_state = shutter_state, dt = dt,       $
+                                      stop = stop
 
 COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
     foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
     foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
     foxsi_default_rate_limit_pixel, foxsi_default_rate_limit_detector
 
+default, dt, 1.
 upper_lower_bound_mode = 0
 array_mode = 0
 
@@ -296,6 +305,7 @@ for layer = 0, n_elements(source_map_spectrum) - 1 do begin
   ; Convert the source map from photons to counts
   this_map = source_map_spectrum[layer]
   this_map.data *= eff_area_values[layer]
+  this_map.data *= dt
 
   ; Generate the convolved image, with noise if desired
   this_map = foxsi_get_output_2d_image(source_map=this_map, /quiet, $
@@ -315,21 +325,50 @@ endfor
 ; If so, print a warning and encourage attenuator use!
 ;
 
-total_data = total(output_map_cube.data, 3)
+if n_elements( output_map_cube ) gt 1 then total_data = total(output_map_cube.data, 3) $
+	else total_data = output_map_cube.data
  
-if max( total_data ) gt foxsi_default_rate_limit_detector or $
-	 total( total_data ) gt foxsi_default_rate_limit_pixel then begin
+if max( total_data )/dt gt foxsi_default_rate_limit_pixel then begin
 
 	print
 	print, '#################################################################'
 	print, '#                                                               #'
-	print, '#  WARNING: If the input source flux is measured in units of    #'
-	print, '#  photons/second, then Detector rates are entering territory   #'
-	print, '#  where nontrivial effects occur.                              #'
-	print
+	print, '#  WARNING: One or more detector pixels is receiving a rate     #
+	print, '#  higher than the acceptable per-pixel rate of ', foxsi_default_rate_limit_pixel, ' cps.'
+	print, '#  Beyond this rate, nontrivial detector effects can occur.     #'
+	print, '#  The highest pixel rate in this simulation is ', max( total_data )/dt, ' cps.'
+	print, '#                                                               #'
+	print, '#  It is assumed that the input photon flux is measured in      #'
+	print, '#  units of photons/second.  To integrate for longer than 1     #'
+	print, '#  second, use the DT keyword.                                  #'
+	print, '#                                                               #'
 	print, '#  It is advised to rerun the procedure with an attenuator      #'
 	print, '#  inserted in order to stay in the simple regime.              #'
+	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+	print, '#  attenuator state options.                                    #'
+	print, '#                                                               #'
+	print, '#################################################################'
 	print
+	 
+endif
+
+if total( total_data )/dt gt foxsi_default_rate_limit_detector then begin
+
+	print
+	print, '#################################################################'
+	print, '#                                                               #'
+	print, '#  WARNING: The total detector rate is higher than the          #'
+	print, '#  acceptable rate of ', foxsi_default_rate_limit_detector, ' counts per second.'
+	print, '#  Beyond this rate, nontrivial detector effects can occur.     #'
+	print, '#  The detector rate in this simulation is ', total( total_data )/dt, ' cps.'
+	print, '#                                                               #'
+	print, '#  It is assumed that the input photon flux is measured in      #'
+	print, '#  units of photons/second.  To integrate for longer than 1     #'
+	print, '#  second, use the DT keyword.                                  #'
+	print, '#                                                               #'
+	print, '#  It is advised to rerun the procedure with an attenuator      #'
+	print, '#  inserted in order to stay in the simple regime.              #'
 	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
 	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
 	print, '#  attenuator state options.                                    #'
