@@ -2,8 +2,9 @@
 ;;;FUNCTION:      "foxsi_get_default_source_cube"         
 ;;;
 ;;;HISTORY:       Initial Commit - 08/31/15 - Samuel Badman
+;;;               Changed overall flux to a more manageable value. -- 8/6/2015 -- Lindsay
 ;;;                                                                                            
-;;;DESCRIPTION:   Funtion which returns an array of structures
+;;;DESCRIPTION:   Function which returns an array of structures
 ;;;               consisting of 2D maps with spectral information
 ;;;               appended as tags. Default spectrum for the routine 
 ;;;               get_foxsi_image_cube.pro          
@@ -65,8 +66,8 @@ source_centre2 = [7*x_size/8,5*(y_size/8)]
 
 FOR i = 0, nbins - 1 DO BEGIN
 
-   source1 = 1000.0;*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
-   source2 = 1000.0*exp(-1*i*ALOG(2)/10)
+   source1 = 0.5*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
+   source2 = 0.5*exp(-1*i*ALOG(2)/10)
 
    ;;; Create Sources from the above parameters
 
