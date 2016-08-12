@@ -108,6 +108,7 @@ END
 FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
   x_size=x_size, y_size=y_size, oversample=oversample, include_wings=include_wings
 
+  default,include_wings,1
   default,xc,0
   default,yc,0
   default,dx,0.5
