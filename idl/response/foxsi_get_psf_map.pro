@@ -93,7 +93,10 @@ END
 ;;;                y_size - the number of pixels in the PSF map in the
 ;;;                         y-dimension
 ;;;                oversample - the number of subpixels to average over in
-;;;                             each pixel. Default is 1 (no oversampling)
+;;;                             each pixel. Default is 1 (no
+;;;                             oversampling)
+;;;                include_wings - if set, use the PSF fit function
+;;;                                that included wing data. Default is 1.
 ;;;
 ;;;OUTPUTS:        psf_map - an SSW map of the PSF at the desired
 ;;;                          pitch, yaw location.
