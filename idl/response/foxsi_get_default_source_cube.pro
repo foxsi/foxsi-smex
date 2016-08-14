@@ -33,7 +33,7 @@ DEFAULT, dx, 1
 DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
-DEFAULT, nbins, 29
+DEFAULT, nbins, 14
 
 lower_energy_bound = 2.0
 upper_energy_bound = 60.0
