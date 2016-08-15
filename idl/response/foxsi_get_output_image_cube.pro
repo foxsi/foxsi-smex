@@ -165,9 +165,6 @@ upper_array = source_map_spectrum.energy_bin_upper_bound_keV
 lower_array = source_map_spectrum.energy_bin_lower_bound_keV
 spec_res    = upper_array[0] - lower_array[0]
 
-; Only print spectral resolution if constant energy binning is used.
-if array_mode eq 0 then print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
-
 
 ;; Obtain effective_area energy profile using foxsi_get_effective_area function
 
