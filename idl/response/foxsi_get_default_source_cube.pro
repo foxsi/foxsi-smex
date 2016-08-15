@@ -33,7 +33,7 @@ DEFAULT, dx, 1
 DEFAULT, dy, 1
 DEFAULT, xc, 0
 DEFAULT, yc, 0
-DEFAULT, nbins, 29
+DEFAULT, nbins, 14
 
 lower_energy_bound = 2.0
 upper_energy_bound = 60.0
@@ -66,8 +66,8 @@ source_centre2 = [7*x_size/8,5*(y_size/8)]
 
 FOR i = 0, nbins - 1 DO BEGIN
 
-   source1 = 0.5*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
-   source2 = 0.5*exp(-1*i*ALOG(2)/10)
+   source1 = 1.0*exp(-1*i*ALOG(2)/50) ; Peak Counts as function of energy
+   source2 = 1.0*exp(-1*i*ALOG(2)/10)
 
    ;;; Create Sources from the above parameters
 

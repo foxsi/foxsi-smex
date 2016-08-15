@@ -129,8 +129,6 @@ IF ABS(TOTAL(rebinned_convolved_array) - TOTAL(convolved_array)) GT 0.0001  THEN
    rebinned_convolved_array =TOTAL(convolved_array)* (rebinned_convolved_array)             $
    /TOTAL(rebinned_convolved_array) 
    
-   print, 'Rebinning loss detected, renormalising...'
-
 ENDIF
 
 
@@ -157,8 +155,6 @@ IF KEYWORD_SET(no_count_stats) NE 1 THEN BEGIN
      ENDFOR
   ENDFOR
 ENDIF
-
-print,  'rebinned_convolved_map returned'
 
 RETURN, rebinned_convolved_map
 
