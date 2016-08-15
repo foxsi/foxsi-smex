@@ -368,12 +368,16 @@ if max( total_data )/dt gt foxsi_default_rate_limit_pixel then begin
 	print, '#  units of photons/second.  To integrate for longer than 1     #'
 	print, '#  second, use the DT keyword.                                  #'
 	print, '#                                                               #'
-	print, '#  It is advised to rerun the procedure with an attenuator      #'
-	print, '#  inserted in order to stay in the simple regime.              #'
-	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
-	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
-	print, '#  attenuator state options.                                    #'
-	print, '#                                                               #'
+	
+	if not keyword_set( shutter_state ) and not keyword_set( shutter_thick_mm ) then begin
+		print, '#  It is advised to rerun the procedure with an attenuator      #'
+		print, '#  inserted in order to stay in the simple regime.              #'
+		print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+		print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+		print, '#  attenuator state options.                                    #'
+		print, '#                                                               #'
+	endif
+	
 	print, '#################################################################'
 	print
 	 
@@ -393,12 +397,16 @@ if total( total_data )/dt gt foxsi_default_rate_limit_detector then begin
 	print, '#  units of photons/second.  To integrate for longer than 1     #'
 	print, '#  second, use the DT keyword.                                  #'
 	print, '#                                                               #'
-	print, '#  It is advised to rerun the procedure with an attenuator      #'
-	print, '#  inserted in order to stay in the simple regime.              #'
-	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
-	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
-	print, '#  attenuator state options.                                    #'
-	print, '#                                                               #'
+	
+	if not keyword_set( shutter_state ) and not keyword_set( shutter_thick_mm ) then begin
+		print, '#  It is advised to rerun the procedure with an attenuator      #'
+		print, '#  inserted in order to stay in the simple regime.              #'
+		print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+		print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+		print, '#  attenuator state options.                                    #'
+		print, '#                                                               #'
+	endif
+	
 	print, '#################################################################'
 	print
 	 
