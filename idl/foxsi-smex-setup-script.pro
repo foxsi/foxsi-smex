@@ -28,8 +28,8 @@ foxsi_blanket_thickness_mm = 0.5
 
 ; Thresholds at which a warning kicks in for detector rates
 ; Thresholds are per-pixel and per-detector.
-foxsi_default_rate_limit_pixel = 6.e3
-foxsi_default_rate_limit_detector = 30.e3
+foxsi_default_rate_limit_pixel = 12.e3
+foxsi_default_rate_limit_detector = 60.e3
 
 add_path, foxsi_root_path, /expand
 

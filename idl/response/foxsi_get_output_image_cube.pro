@@ -5,6 +5,9 @@
 ;;;               Improved Convolution Method - 08/31/15 - Samuel Badman               
 ;;;               Added warnings for "too high" count rates -- 7/12/2016 -- Lindsay Glesener
 ;;;               Improved rate warnings; added keyword DT -- 8/6/2016 -- LG
+;;;               Tweak to allow feed-through of attenuator thickness keyword -- 8/14/16 -- LG
+;;;                    Note: keeping SHUTTER_THICKNESS explicit, not implicit, so that
+;;;                    it's evident to a user of this top-level routine.
 ;;;
 ;;;DESCRIPTION:   Function which takes a simulated event (an array of
 ;;;               flux maps at different energy values) and obtains a
@@ -60,6 +63,11 @@
 ;;;               dt -- time integration step.  If set, integrate over DT seconds.  
 ;;;                     Default is 1 second.
 ;;;
+;;;               shutter_state -- Attenuator state 0 (does nothing), 1, or 2.
+;;;
+;;;               shutter_thick_mm -- Explicit thickness for attenuator.
+;;;                     This overrides SHUTTER_STATE.
+;;;
 ;;;COMMENTS:      -Runtime scales badly with FOV size
 ;;;               -The default spatial dimensions are set to 
 ;;;                [100,100] ~1.66' X 1.66' FOV at 1 arcsec per
@@ -80,7 +88,8 @@ FUNCTION foxsi_get_output_image_cube, source_map_spectrum = source_map_spectrum,
                                       no_count_stats = no_count_stats,              $
                                       oversample_psf = oversample_psf, 							$
                                       shutter_state = shutter_state, dt = dt,       $
-                                      stop = stop
+                                      shutter_thick_mm=shutter_thick_mm,            $
+                                      _extra = _extra, stop = stop
 
 COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
     foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
@@ -156,13 +165,12 @@ upper_array = source_map_spectrum.energy_bin_upper_bound_keV
 lower_array = source_map_spectrum.energy_bin_lower_bound_keV
 spec_res    = upper_array[0] - lower_array[0]
 
-; Only print spectral resolution if constant energy binning is used.
-if array_mode eq 0 then print, "Spectral Resolution (keV/Energy_Bin) ="+string(spec_res)
-
 
 ;; Obtain effective_area energy profile using foxsi_get_effective_area function
 
-eff_area = foxsi_get_effective_area( SHUTTER_STATE = SHUTTER_STATE )
+eff_area = foxsi_get_effective_area( SHUTTER_STATE=shutter_state, $
+                                     SHUTTER_THICK_MM=shutter_thick_mm,  $
+                                     _EXTRA=_extra )
 
 ;; Pull in eff_area tags as variables
 
@@ -327,27 +335,49 @@ endfor
 
 if n_elements( output_map_cube ) gt 1 then total_data = total(output_map_cube.data, 3) $
 	else total_data = output_map_cube.data
- 
+
+; Generally useful info, whether warnings are generated or not
+print
+print
+print, '#####  INFO  #####
+print
+if keyword_set( SHUTTER_THICK_MM ) then begin
+	print, '       Attenuator thickness is ', shutter_thick_mm, ' mm.'
+endif else if keyword_set( SHUTTER_STATE ) then begin
+	print, '       Attenuator state is         ', shutter_state
+	print, '       Attenuator thickness is ', foxsi_shutters_thickness_mm[shutter_state], ' mm.'
+endif else print, '       No attenuator set.'
+print
+print, '       Total detector rate is  ', long(total( total_data )/dt)
+print, '       Detector rate limit is  ', long(foxsi_default_rate_limit_detector)
+print, '       Max per-pixel rate is   ', long(max( total_data )/dt)
+print, '       Per-pixel rate limit is ', long(foxsi_default_rate_limit_pixel)
+print
+
 if max( total_data )/dt gt foxsi_default_rate_limit_pixel then begin
 
 	print
 	print, '#################################################################'
 	print, '#                                                               #'
 	print, '#  WARNING: One or more detector pixels is receiving a rate     #
-	print, '#  higher than the acceptable per-pixel rate of ', foxsi_default_rate_limit_pixel, ' cps.'
+	print, '#  higher than the acceptable per-pixel rate of ', long(foxsi_default_rate_limit_pixel), ' cps.'
 	print, '#  Beyond this rate, nontrivial detector effects can occur.     #'
-	print, '#  The highest pixel rate in this simulation is ', max( total_data )/dt, ' cps.'
+	print, '#  The highest pixel rate in this simulation is ', long(max( total_data )/dt), ' cps.'
 	print, '#                                                               #'
 	print, '#  It is assumed that the input photon flux is measured in      #'
 	print, '#  units of photons/second.  To integrate for longer than 1     #'
 	print, '#  second, use the DT keyword.                                  #'
 	print, '#                                                               #'
-	print, '#  It is advised to rerun the procedure with an attenuator      #'
-	print, '#  inserted in order to stay in the simple regime.              #'
-	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
-	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
-	print, '#  attenuator state options.                                    #'
-	print, '#                                                               #'
+	
+	if not keyword_set( shutter_state ) and not keyword_set( shutter_thick_mm ) then begin
+		print, '#  It is advised to rerun the procedure with an attenuator      #'
+		print, '#  inserted in order to stay in the simple regime.              #'
+		print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+		print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+		print, '#  attenuator state options.                                    #'
+		print, '#                                                               #'
+	endif
+	
 	print, '#################################################################'
 	print
 	 
@@ -359,20 +389,24 @@ if total( total_data )/dt gt foxsi_default_rate_limit_detector then begin
 	print, '#################################################################'
 	print, '#                                                               #'
 	print, '#  WARNING: The total detector rate is higher than the          #'
-	print, '#  acceptable rate of ', foxsi_default_rate_limit_detector, ' counts per second.'
+	print, '#  acceptable rate of ', long(foxsi_default_rate_limit_detector), ' counts per second.'
 	print, '#  Beyond this rate, nontrivial detector effects can occur.     #'
-	print, '#  The detector rate in this simulation is ', total( total_data )/dt, ' cps.'
+	print, '#  The detector rate in this simulation is ', long(total( total_data )/dt), ' cps.'
 	print, '#                                                               #'
 	print, '#  It is assumed that the input photon flux is measured in      #'
 	print, '#  units of photons/second.  To integrate for longer than 1     #'
 	print, '#  second, use the DT keyword.                                  #'
 	print, '#                                                               #'
-	print, '#  It is advised to rerun the procedure with an attenuator      #'
-	print, '#  inserted in order to stay in the simple regime.              #'
-	print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
-	print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
-	print, '#  attenuator state options.                                    #'
-	print, '#                                                               #'
+	
+	if not keyword_set( shutter_state ) and not keyword_set( shutter_thick_mm ) then begin
+		print, '#  It is advised to rerun the procedure with an attenuator      #'
+		print, '#  inserted in order to stay in the simple regime.              #'
+		print, '#  An attenuator can be inserted with keyword SHUTTER_STATE = 1 #'
+		print, '#  See header of foxsi_get_shutter_transmission.pro for         #'
+		print, '#  attenuator state options.                                    #'
+		print, '#                                                               #'
+	endif
+	
 	print, '#################################################################'
 	print
 	 
