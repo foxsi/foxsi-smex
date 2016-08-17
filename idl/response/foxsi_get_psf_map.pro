@@ -109,9 +109,9 @@ END
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
-  x_size=x_size, y_size=y_size, oversample=oversample, include_wings=include_wings
+  x_size=x_size, y_size=y_size, oversample=oversample, no_wings=no_wings
 
-  default,include_wings,1
+  default,no_wings,0
   default,xc,0
   default,yc,0
   default,dx,0.5
@@ -131,7 +131,7 @@ FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
   COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path
   variable_fit_params = READ_ASCII(foxsi_data_path + 'psf_parameters.txt')
 
-  IF not keyword_set(include_wings) THEN BEGIN
+  IF keyword_set(no_wings) THEN BEGIN
      poly_amp1 = reverse(variable_fit_params.field1[*,0])
      poly_amp2 = reverse(variable_fit_params.field1[*,1])
      poly_amp3 = reverse(variable_fit_params.field1[*,2])
@@ -183,7 +183,7 @@ FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
 ;;;;;;;;;;;;;;;;;;;;;;;;;gaussian fits
 
-  IF not keyword_set(include_wings) THEN BEGIN
+  IF keyword_set(no_wings) THEN BEGIN
      ;construct the 3-gaussian FOXSI PSF for a given offaxis angle and polar angle
      g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, polar_angle)
      g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, polar_angle)
