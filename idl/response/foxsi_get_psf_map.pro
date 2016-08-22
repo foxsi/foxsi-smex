@@ -28,6 +28,33 @@ FUNCTION gauss2d,x,y, amp, cen_x, cen_y, sigma_x, sigma_y, theta
 END
 
 
+FUNCTION lorentz_2d,x,y,amp,cen_x,cen_y,sigma_x,sigma_y
+   ; a 2d-lorentzian with a cutoff at low x,y values 
+  ; PARAMETERS:
+  ;            x : a set of x-indices, eg findgen(1000)-500
+  ;            y : a set of y-indices, e.g. findgen(1000) - 500
+  ;            amp : the lorentzian amplitude
+  ;            cen_x : the centre of the lorentzian in x
+  ;            cen_y : the centre of the lorentzian in y
+  ;            sigma_x : the width if the lorentzian in x
+  ;            sigma_y : the width of the lortentzian in y
+  ;
+  ; RETURNS:
+  ; A 2-d lorentzian array with dimensions (x,y)
+
+  lorentz = fltarr(n_elements(x),n_elements(y))
+  for i = 0, n_elements(x) - 1 do begin
+     for j = 0, n_elements(y) - 1 do begin
+        lorentz[i,j] = (amp/!pi)  / ((1.0 +( (x[i] - cen_x)/sigma_x)^2) + (1.0 + ( (y[j] - cen_y)/sigma_y )^2 ))
+     endfor
+  endfor
+    
+  lorentz_with_cutoff = lorentz * (gauss2d(x,y,-1.0,cen_x,cen_y,10.0,10.0,0.0) + 1.0)
+
+  return, lorentz_with_cutoff
+END
+  
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;FUNCTION:        "foxsi_get_psf_map"
 ;;;
@@ -35,7 +62,12 @@ END
 ;;;                 Tweaked to accomodate new convolution method -
 ;;;                 08/31/15 - Samuel Badman
 ;;;                 Changed name to foxsi_get_psf_map, and added
-;;;                 PSF as a function of position - 11/02/15 - A. Inglis
+;;;                 11/02/15 - PSF as a function of position - A. Inglis
+;;;                                
+;;;                 Unknown date - PSF as a function of position was
+;;;                                removed.
+;;;                 08/11/16 - added keyword 'include_wings' to use
+;;;                            PSF model that includes wing data  
 ;;;
 ;;;DESCRIPTION:     Function which generates a prescribed 2D point
 ;;;                 spread function with specified parameters. Takes arguments of the
@@ -61,7 +93,10 @@ END
 ;;;                y_size - the number of pixels in the PSF map in the
 ;;;                         y-dimension
 ;;;                oversample - the number of subpixels to average over in
-;;;                             each pixel. Default is 1 (no oversampling)
+;;;                             each pixel. Default is 1 (no
+;;;                             oversampling)
+;;;                include_wings - if set, use the PSF fit function
+;;;                                that included wing data. Default is 1.
 ;;;
 ;;;OUTPUTS:        psf_map - an SSW map of the PSF at the desired
 ;;;                          pitch, yaw location.
@@ -74,12 +109,15 @@ END
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
-  x_size=x_size, y_size=y_size, oversample=oversample
+  x_size=x_size, y_size=y_size, oversample=oversample, no_wings=no_wings
 
+  default,no_wings,0
   default,xc,0
   default,yc,0
   default,dx,0.5
   default,dy,0.5
+  default,pitch,0.0
+  default,yaw,0.0
   default,x_size,101
   default,y_size,101
   default,oversample,1
@@ -92,50 +130,78 @@ FUNCTION foxsi_get_psf_map, xc, yc, dx, dy, pitch, yaw,$
  ;read FOXSI PSF parameter fit values from file
   COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path
   variable_fit_params = READ_ASCII(foxsi_data_path + 'psf_parameters.txt')
-  
-  poly_amp1 = reverse(variable_fit_params.field1[*,0])
-  poly_amp2 = reverse(variable_fit_params.field1[*,1])
-  poly_amp3 = reverse(variable_fit_params.field1[*,2])
-  poly_width_x1 = reverse(variable_fit_params.field1[*,3])
-  poly_width_x2 = reverse(variable_fit_params.field1[*,4])
-  poly_width_x3 = reverse(variable_fit_params.field1[*,5])
-  poly_width_y1 = reverse(variable_fit_params.field1[*,6])
-  poly_width_y2 = reverse(variable_fit_params.field1[*,7])
-  poly_width_y3 = reverse(variable_fit_params.field1[*,8])
 
-  ;reconstruct the fit functions for each parameter of the FOXSI PSF
-  amp1 = poly(offaxis_angle,poly_amp1)
-  amp2 = poly(offaxis_angle,poly_amp2)
-  amp3 = poly(offaxis_angle,poly_amp3)
-  width_x1 = poly(offaxis_angle,poly_width_x1)
-  width_y1 = poly(offaxis_angle,poly_width_y1)
-  width_x2 = poly(offaxis_angle,poly_width_x2)
-  width_y2 = poly(offaxis_angle,poly_width_y2)
-  width_x3 = poly(offaxis_angle,poly_width_x3)
-  width_y3 = poly(offaxis_angle,poly_width_y3)
+  IF keyword_set(no_wings) THEN BEGIN
+     poly_amp1 = reverse(variable_fit_params.field1[*,0])
+     poly_amp2 = reverse(variable_fit_params.field1[*,1])
+     poly_amp3 = reverse(variable_fit_params.field1[*,2])
+     poly_width_x1 = reverse(variable_fit_params.field1[*,3])
+     poly_width_x2 = reverse(variable_fit_params.field1[*,4])
+     poly_width_x3 = reverse(variable_fit_params.field1[*,5])
+     poly_width_y1 = reverse(variable_fit_params.field1[*,6])
+     poly_width_y2 = reverse(variable_fit_params.field1[*,7])
+     poly_width_y3 = reverse(variable_fit_params.field1[*,8])
+
+     ;reconstruct the fit functions for each parameter of the FOXSI PSF
+     amp1 = poly(offaxis_angle,poly_amp1)
+     amp2 = poly(offaxis_angle,poly_amp2)
+     amp3 = poly(offaxis_angle,poly_amp3)
+     width_x1 = poly(offaxis_angle,poly_width_x1)
+     width_y1 = poly(offaxis_angle,poly_width_y1)
+     width_x2 = poly(offaxis_angle,poly_width_x2)
+     width_y2 = poly(offaxis_angle,poly_width_y2)
+     width_x3 = poly(offaxis_angle,poly_width_x3)
+     width_y3 = poly(offaxis_angle,poly_width_y3)
+
+  ENDIF ELSE BEGIN
+     fit_params = READ_ASCII(foxsi_data_path + 'psf_parameters_with_wings.txt')
+     amp1 = fit_params.field1[0]
+     amp2 = fit_params.field1[1]
+     amp3 = fit_params.field1[2]
+     amp4 = fit_params.field1[3]
+     width_x1 = fit_params.field1[6]
+     width_y1 = fit_params.field1[7]
+     width_x2 = fit_params.field1[8]
+     width_y2 = fit_params.field1[9]
+     width_x3 = fit_params.field1[10]
+     width_y3 = fit_params.field1[11]
+     width_x4 = fit_params.field1[12]
+     width_y4 = fit_params.field1[13]
+  ENDELSE
 
 
 ;;;08/31 - Make sure dimensions of psf_array are odd to be able to
 ;;;        precisely line up pixels during convolution.
 ;;;
-  psf_x_size = (2 * (long(x_size) / 2) + 1) * oversample_int
-  psf_y_size = (2 * (long(y_size) / 2) + 1) * oversample_int
+     psf_x_size = (2 * (long(x_size) / 2) + 1) * oversample_int
+     psf_y_size = (2 * (long(y_size) / 2) + 1) * oversample_int
 
-  x = (findgen(psf_x_size) * dx / oversample_int) - ( ((psf_x_size - 1) / 2. * dx / oversample_int)) + xc
-  y = (findgen(psf_y_size) * dy / oversample_int) - ( ((psf_y_size - 1) / 2. * dy / oversample_int)) + yc
+     x = (findgen(psf_x_size) * dx / oversample_int) - ( ((psf_x_size - 1) / 2. * dx / oversample_int)) + xc
+     y = (findgen(psf_y_size) * dy / oversample_int) - ( ((psf_y_size - 1) / 2. * dy / oversample_int)) + yc
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;Generate PSF with measured paramaters for
 ;;;;;;;;;;;;;;;;;;;;;;;;;gaussian fits
 
-  ;construct the 3-gaussian FOXSI PSF for a given offaxis angle and polar angle
-  g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, polar_angle)
-  g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, polar_angle)
-  g3 = gauss2d(x, y, amp3, xc, yc, width_x3, width_y3, polar_angle)
+  IF keyword_set(no_wings) THEN BEGIN
+     ;construct the 3-gaussian FOXSI PSF for a given offaxis angle and polar angle
+     g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, polar_angle)
+     g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, polar_angle)
+     g3 = gauss2d(x, y, amp3, xc, yc, width_x3, width_y3, polar_angle)
 
   ;; Normalise total PSF so that total of psf_array EQ 1
-  psf = (g1 + g2 + g3) / total(g1+g2+g3)
+     psf = (g1 + g2 + g3) / total(g1+g2+g3)
+  ENDIF ELSE BEGIN
+     ;construct the 3-gaussian-plus-lorentzian FOXSI PSF to include wing data
+     g1 = gauss2d(x, y, amp1, xc, yc, width_x1, width_y1, polar_angle)
+     g2 = gauss2d(x, y, amp2, xc, yc, width_x2, width_y2, polar_angle)
+     g3 = gauss2d(x, y, amp3, xc, yc, width_x3, width_y3, polar_angle)
+     lor = lorentz_2d(x, y, amp4, xc, yc, width_x4, width_y4)
 
+     ;; Normalise total PSF so that total of psf_array EQ 1
+     psf = (g1 + g2 + g3 + lor) / total(g1 + g2 + g3 + lor)
+  ENDELSE
+     
   if oversample_int gt 1 then begin
     psf = reform(psf, oversample_int, psf_x_size / oversample_int, oversample_int, psf_y_size / oversample_int, /overwrite)
     psf = total(total(psf, 3), 1)
