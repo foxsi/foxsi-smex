@@ -19,7 +19,7 @@ foxsi_launch_date = '2020/06/01'
 foxsi_focal_length = 15
 
 foxsi_shutters_thickness_mm = [0, 2.4, 4.8]
-foxsi_detector_thickness_mm = 0.500
+foxsi_detector_thickness_mm = 1.0
 ; the blankets are assumed to be made of mylar
 foxsi_blanket_thickness_mm = 0.5
 

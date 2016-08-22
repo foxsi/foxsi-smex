@@ -10,7 +10,7 @@ detector_material = 'cdte'
 launch_date = datetime(2020, 06, 01)
 
 shutters_thickness = [0, 1.0, 1.5] * u.mm
-detector_thickness = 500 * u.micron
+detector_thickness = 1.0 * u.mm
 blanket_thickness = 0.5 * u.mm
 
 focal_length = 15 * u.m
