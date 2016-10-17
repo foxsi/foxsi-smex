@@ -24,7 +24,10 @@ FUNCTION foxsi_get_instrument_background, ENERGY_ARR = energy_arr, IN_HPD = in_h
     IF NOT keyword_set(energy_arr) THEN energy_keV = findgen(60) ELSE $
         energy_keV = energy_arr
 
-    result = 2. * energy_keV ^ (-0.8) * exp(-energy_keV / 30.)
+    ; This expression includes an additional factor of 2 to account for the increased background
+    ; at 28.5-deg inclination compared to 6-deg inclination
+    result = 2. * 2. * energy_keV ^ (-0.8) * exp(-energy_keV / 30.)
+
     IF keyword_set(in_hpd) THEN result *= !pi / 4. * 25. ^ 2 / (9. * 60) ^ 2
 
     RETURN, result
