@@ -15,9 +15,10 @@
 ;			plot - if true then plot to the screen
 ;           position - the position in the field of view (default is [0,0] On-axis)
 ;           configuration - the configuration of the optics
-;               1 : 15 meters
-;               2 : 10 meters 3 modules
-;               3 : 10 meters 2 modules
+;               1 : 14 meters 20 shells 2 modules (baseline)
+;               2 : 14 meters 20 shells 1 modules
+;               3 : 14 meters 15 shells 2 modules
+;               4 : 14 meters 15 shells 1 module
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV

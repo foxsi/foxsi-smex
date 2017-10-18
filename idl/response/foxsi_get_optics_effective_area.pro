@@ -15,9 +15,10 @@
 ;			plot - if true then plot to the screen
 ;           position - the position in the field of view (default is [0,0] On-axis)
 ;           configuration - the configuration of the optics
-;               1 : 15 meters
-;               2 : 10 meters 3 modules
-;               3 : 10 meters 2 modules
+;               1 : 14 meters 20 shells 2 modules (baseline)
+;               2 : 14 meters 20 shells 1 modules
+;               3 : 14 meters 15 shells 2 modules
+;               4 : 14 meters 15 shells 1 module
 ;
 ; RETURNS : struct
 ;               energy_keV - the energy in keV
@@ -42,15 +43,23 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     eff_area_orig_cm2 = fltarr(n_elements(energy_orig_kev))
 
     CASE configuration OF
-        1: eff_area_orig_cm2 = eff_area_data.eff_area_cm2_1
-        2: eff_area_orig_cm2 = eff_area_data.eff_area_cm2_2
-        3: BEGIN
-            eff_area_orig_cm2 = eff_area_data.eff_area_cm2_3
+        1: BEGIN
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2
             foxsi_number_of_modules = 2
+        END
+        2: BEGIN
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2
+            foxsi_number_of_modules = 1
+        3: BEGIN ; TODO implement 15 shell configuration
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2
+            foxsi_number_of_modules = 2
+        END
+        4: BEGIN ; TODO implement 15 shell configuration
+            eff_area_orig_cm2 = eff_area_data.eff_area_cm2
+            foxsi_number_of_modules = 1
         END
         ELSE: PRINT, 'Configuration not found'
     ENDCASE
-
     ; add up all of the areas for each of the included optics shells
     ;FOR i = 0, n_elements(foxsi_shell_ids)-1 DO BEGIN
     ;    eff_area_orig_cm2 += data[foxsi_shell_ids[i]-1, *]
