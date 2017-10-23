@@ -38,6 +38,6 @@ FUNCTION foxsi_load_shell_effective_area
     readf, lun, data
     free_lun, lun
     data = transpose(data)
-    result = create_struct('energy_keV', data[0, *], 'eff_area_cm2', data[1:20, *])
+    result = create_struct('energy_keV', data[*, 0], 'eff_area_cm2', data[*, 1:20])
     RETURN, result
 END
