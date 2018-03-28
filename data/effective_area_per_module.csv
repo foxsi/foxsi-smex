@@ -1,6 +1,6 @@
 # FOXSI - effective area per module - 18 shells, 2018/03/19
 # energy in keV
-# effective area in cm^2
+# effective area in cm^2 including 10% vignetting due to spider
 # to get total effective area multiple by the number of modules (in parens)
 energy,14.0 m (2)
 1,32.66
