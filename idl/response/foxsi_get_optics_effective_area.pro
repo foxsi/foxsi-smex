@@ -48,7 +48,8 @@ FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, 
     ;ENDFOR
 
     ; include loss of area due to optics mounting structure (spider)
-    eff_area_orig_cm2 = eff_area_orig_cm2 * 0.9
+    ; removed as already included in effective area
+    ; eff_area_orig_cm2 = eff_area_orig_cm2 * 0.9
 
 	IF keyword_set(energy_arr) THEN BEGIN
 	    eff_area_cm2 = interpol(eff_area_orig_cm2, energy_orig_kev, energy_arr)
