@@ -1,13 +1,11 @@
 """Plot the effective area as a function of energy"""
-from pyfoxsi.response import Response
+from pyfoxsi.response import DSIResponse
 import matplotlib.pyplot as plt
 
-resp = Response()
+resp = DSIResponse()
+
+resp = DSIResponse(shutter_state=0)
 
 resp.plot()
-plt.show()
-
-resp = Response(shutter_state=1)
-
-resp.plot()
+plt.plot(resp._energies, resp.optic_effective_area, label='Optics only')
 plt.show()
