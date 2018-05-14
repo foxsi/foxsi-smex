@@ -14,7 +14,15 @@ import astropy.units as u
 from roentgen.absorption import Material
 import pyfoxsi
 
-__all__ = ['DSIResponse']
+__all__ = ['dsi_background', 'DSIResponse']
+
+
+def dsi_background(energy, in_hpd=True):
+    """Returns results in counts/s/keV"""
+    result = 2. * energy.to('keV').value ** (-0.8) * np.exp(-energy.to('keV').value / 30.)
+    if in_hpd:
+        result *=  np.pi / 4. * 25. ** 2 / (9 * 60) ** 2
+    return result * u.count / u.s / u.keV
 
 
 class DSIResponse(object):
