@@ -29,6 +29,14 @@ foxsi_blanket_thickness_mm = 0.5
 foxsi_default_rate_limit_pixel = 12.e3
 foxsi_default_rate_limit_detector = 60.e3
 
+; STC Parameters
+foxsi_stc_aperture_area_mm2 = create_struct(q, 1.0, f, 0.02)
+foxsi_stc_detector_material = 'Si'
+foxsi_stc_detector_thickness_mm = 0.5
+foxsi_stc_filter_material = 'Be'
+foxsi_stc_filter_thickness_um = create_struct(q: 15, f, 50)
+
+
 add_path, foxsi_root_path, /expand
 
 print, 'FOXSI SMEX Ready to Go!'
