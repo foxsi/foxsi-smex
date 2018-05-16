@@ -15,7 +15,11 @@ foxsi_data_path = strmid(foxsi_root_path, 0, strlen(foxsi_root_path)-3) + 'data/
 ;foxsi_data_path = foxsi_root_path + '/data/'
 foxsi_name = 'FOXSI-SMEX'
 foxsi_number_of_modules = 2
+<<<<<<< HEAD
 foxsi_launch_date = '2022/07/01'
+=======
+foxsi_launch_date = '2020/06/01'
+>>>>>>> origin/master
 
 foxsi_focal_length = 14
 
@@ -25,6 +29,13 @@ foxsi_detector_thickness_mm = 1.0
 ; the blankets are assumed to be made of mylar
 foxsi_blanket_thickness_mm = 0.5
 
+<<<<<<< HEAD
+=======
+; the shells that are included in a FOXSI optics module
+; shell numbers start with 0
+; foxsi_shell_ids = indgen(20)
+
+>>>>>>> origin/master
 ; Thresholds at which a warning kicks in for detector rates
 ; Thresholds are per-pixel and per-detector.
 foxsi_default_rate_limit_pixel = 12.e3
