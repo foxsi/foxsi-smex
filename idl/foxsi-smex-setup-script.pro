@@ -1,7 +1,8 @@
 COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
     foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
     foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
-    foxsi_default_rate_limit_pixel, foxsi_default_rate_limit_detector
+    foxsi_stc_aperture_area_mm2, foxsi_stc_detector_material, foxsi_stc_detector_thickness_mm, $
+    foxsi_stc_filter_material, foxsi_stc_filter_thickness_um
 
 ; Set Path where foxsi-smex is
 CD, Current=fs_location
@@ -30,11 +31,11 @@ foxsi_default_rate_limit_pixel = 12.e3
 foxsi_default_rate_limit_detector = 60.e3
 
 ; STC Parameters
-foxsi_stc_aperture_area_mm2 = create_struct(q, 1.0, f, 0.02)
+foxsi_stc_aperture_area_mm2 = {q: 1.0, f: 0.02}
 foxsi_stc_detector_material = 'Si'
 foxsi_stc_detector_thickness_mm = 0.5
 foxsi_stc_filter_material = 'Be'
-foxsi_stc_filter_thickness_um = create_struct(q: 15, f, 50)
+foxsi_stc_filter_thickness_um = {q: 15, f: 50}
 
 
 add_path, foxsi_root_path, /expand
