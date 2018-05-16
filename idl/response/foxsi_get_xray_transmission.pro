@@ -28,7 +28,9 @@ FUNCTION foxsi_get_xray_transmission, thickness_mm, material, ENERGY_ARR = energ
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
+        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
+        foxsi_stc_aperture_area_mm2, foxsi_stc_detector_material, foxsi_stc_detector_thickness_mm, $
+        foxsi_stc_filter_material, foxsi_stc_filter_thickness_um
 
     ; load the data
     path = foxsi_data_path + 'mass_atten_idl/' + material + '.csv'

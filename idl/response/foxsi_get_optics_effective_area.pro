@@ -28,10 +28,12 @@
 FUNCTION foxsi_get_optics_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
     POSITION = position
 
-	; load the foxsi-smex common block
+    ; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
-        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
+    foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
+    foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
+    foxsi_stc_aperture_area_mm2, foxsi_stc_detector_material, foxsi_stc_detector_thickness_mm, $
+    foxsi_stc_filter_material, foxsi_stc_filter_thickness_um
 
 	eff_area_data = foxsi_load_optics_effective_area()
     energy_orig_kev = eff_area_data.energy_kev
