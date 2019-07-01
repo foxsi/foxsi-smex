@@ -3,214 +3,172 @@ Response is a module to handle the response of the FOXSI telescopes
 """
 
 from __future__ import absolute_import
+import os
 
 import pandas as pd
 import numpy as np
-
-import warnings
-import os
-
 import matplotlib.pyplot as plt
-import astropy.units as u
 from scipy import interpolate
+
+import astropy.units as u
+from roentgen.absorption import Material
 import pyfoxsi
 
-import h5py
+__all__ = ['dsi_background', 'DSIResponse', 'STCResponse']
 
-__all__ = ['Response', 'Material']
+
+def dsi_background(energy, in_hpd=True):
+    """Returns results in counts/s/keV"""
+    result = 2. * energy.to('keV').value ** (-0.8) * np.exp(-energy.to('keV').value / 30.)
+    if in_hpd:
+        result *=  np.pi / 4. * 25. ** 2 / (9 * 60) ** 2
+    return result * u.count / u.s / u.keV
 
 
 class Response(object):
-    """An object which provides the FOXSI telescope response
+    """A generic object to provide the response of a FOXSI instrument.
+    """
+
+    def __init__(self, energy, effective_area, optical_path):
+
+        self.data = pd.DataFrame({'effective_area': effective_area.to('cm ** 2').value,
+                                  'energy': energy.to('keV').value})
+        self.data.set_index('energy', inplace=True)
+
+        self._energies = u.Quantity(self.data.index, 'keV')
+        self._optic_effective_area = u.Quantity(self.data['effective_area'],
+                                                'cm**2')
+        self.optical_path = optical_path
+
+    def plot(self, energy=None, axes=None, color=None):
+        """Plot the effective area"""
+        if axes is None:
+            axes = plt.gca()
+        if energy is None:
+            energy = self.energy
+        y = self.effective_area(energy)
+        if color is None:
+            axes.plot(self.energy, y)
+        else:
+            axes.plot(self.energy, y, color=color)
+        axes.set_ylabel('Effective area [{0}]'.format(str(y.unit)))
+        axes.set_xlabel('Energy [{0}]'.format(str(energy.unit)))
+
+    @property
+    def energy(self):
+        return self._energies
+
+    def effective_area(self, energy):
+        """Given an energy return the effective area."""
+        factor = self._calc_factor_from_optical_path()
+        effarea = self._optic_effective_area.value * factor
+        f = interpolate.interp1d(self._energies.to_value('keV'),
+                                 effarea)
+        return f(energy) * u.cm ** 2
+
+    def _calc_factor_from_optical_path(self):
+        """Calculate the effect of material on the optical path."""
+        factor = np.ones_like(self._energies.value)
+        # Apply all of the materials in the optical path to factor
+        for mat in self.optical_path:
+            if mat.name.count('Cadmium Telluride') or mat.name.count('Silicon'):  # should not hard code
+                # if it is the detector than we want the absorption
+                factor *= mat.absorption(self._energies).value
+            else:
+                factor *= mat.transmission(self._energies).value
+        return factor
+
+
+class STCResponse(Response):
+    """An object which provides the FOXSI STC telescope response
 
     Parameters
     ----------
-    shutter_state : int, default 0
-        A number representing the state of the shutter (0 - no shutter, 1 - thin shutter, 2 - thick shutter)
-    configuration : int, default 1
-        Choose the optics configuration
-            1 : 15 meters
-            2 : 10 meters 3 modules
-            3 : 10 meters 2 modules
+    kind : str (Q or F)
+       Specify the STC detector. Q is for quiet which provides more
+        sensitivity. F is for flare which is optimized for flares observations.
 
     Examples
     --------
-    >>> from pyfoxsi.response import Response
-    >>> resp = Response()
-    >>> resp1 = Response(shutter_state=1)
+    >>> from pyfoxsi.response import STCResponse
+    >>> resp = STCResponse()
+    >>> resp_q = STCResponse(kind='Q')
+    >>> resp_f = STCResponse(kind='F')
     """
-    def __init__(self, shutter_state=0, configuration=1):
+    def __init__(self, kind='Q'):
+
+        energies = np.arange(0.2, 20, 0.1)
+
+        if (kind != 'Q') and (kind != 'F'):
+            raise ValueError('Not a valid STC kind. Must be Q or F')
+
+        # add the detector to the path
+        optical_path = []
+        optical_path.append(Material(pyfoxsi.stc_detector_material, pyfoxsi.stc_detector_thickness))
+        # add the kind specific filter to the path
+        optical_path.append(Material(pyfoxsi.stc_filter_material,
+                                     pyfoxsi.stc_filter_thickness.get(kind)))
+        effective_area = np.ones_like(energies) * pyfoxsi.stc_aperture_area.get(kind)
+
+        super().__init__(energies * u.keV, effective_area, optical_path)
+        self.__kind = kind
+
+    @property
+    def kind(self):
+        return self.__kind
+
+    @kind.setter
+    def kind(self, x):
+        raise AttributeError('Cannot change kind. Create new object with desired value.')
+
+
+class DSIResponse(Response):
+    """An object which provides the FOXSI DSI telescope response
+
+    Parameters
+    ----------
+    shutter_state : int, default 0 (no shutter)
+        A number representing the state of the shutter
+
+    Examples
+    --------
+    >>> from pyfoxsi.response import DSIResponse
+    >>> resp = DSIResponse()
+    >>> resp_atten1 = DSIResponse(shutter_state=1)
+    """
+    def __init__(self, shutter_state=0, number_of_telescopes=2):
         path = os.path.dirname(pyfoxsi.__file__)
         for i in np.arange(3):
             path = os.path.dirname(path)
         path = os.path.join(path, 'data/')
         filename = 'effective_area_per_module.csv'
         effarea_file = os.path.join(path, filename)
-        optics_effective_area = pd.read_csv(effarea_file, index_col=0, skiprows=4)
-        optics_effective_area = optics_effective_area[optics_effective_area.columns[configuration-1]]
-
-        if configuration == 1:
-            pyfoxsi.focal_length = 15 * u.m
-            pyfoxsi.number_of_telescopes = 3
-        elif configuration == 2:
-            pyfoxsi.focal_length = 10 * u.m
-            pyfoxsi.number_of_telescopes = 3
-        elif configuration == 3:
-            pyfoxsi.focal_length = 10 * u.m
-            pyfoxsi.number_of_telescopes = 2
-
-        self.optics_effective_area = pd.DataFrame(dict(total=optics_effective_area.copy(),
-                                                       module=optics_effective_area.copy()))
-        # find what shells are missing
-        #shell_numbers = np.array(self._eff_area_per_shell.columns, np.uint)
-        #missing_shells = np.setdiff1d(shell_numbers, pyfoxsi.shell_ids)
-        # remove the missing shells
-        self.__number_of_telescopes = 1
-        #for missing_shell in missing_shells:
-        #    self._eff_area_per_shell.drop(str(missing_shell), 1, inplace=True)
-        # now add the effective area of all of the shells together
-        #self.optics_effective_area = pd.DataFrame({'module': self._eff_area_per_shell.sum(axis=1), 'total': self._eff_area_per_shell.sum(axis=1)})
-        self.effective_area = pd.DataFrame(dict(total=self.optics_effective_area['total'].copy(), module=self.optics_effective_area['module'].copy()))
-        self.number_of_telescopes = pyfoxsi.number_of_telescopes
-        self._set_default_optical_path()
-        if shutter_state > 0:
-            self.__optical_path.append(Material('al', pyfoxsi.shutters_thickness[shutter_state]))
-        self.__shutter_state = shutter_state
-        self._add_optical_path_to_effective_area()
-
-    def plot(self, axes=None):
-        """Plot the effective area"""
-        if axes is None:
-            axes = plt.gca()
-        a = self.effective_area.plot(axes=axes)
-        axes.set_title(pyfoxsi.mission_title + ' ' + str(self.number_of_telescopes) + 'x ' + 'Shutter State ' + str(self.shutter_state))
-        axes.set_ylabel('Effective area [cm$^2$]')
-        axes.set_xlabel('Energy [keV]')
-
-    def _set_default_optical_path(self):
-        self.__optical_path = [Material('mylar', pyfoxsi.blanket_thickness),
-                            Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
+        data = pd.read_csv(effarea_file, index_col=0, skiprows=4)
+        energy = u.Quantity(data.index, u.keV)
+        effective_area = data['effective_area'].values * u.cm ** 2
+        # the default optical path
+        optical_path = [Material(pyfoxsi.blanket_material, pyfoxsi.blanket_thickness),
+                        Material(pyfoxsi.detector_material, pyfoxsi.detector_thickness)]
+        if (shutter_state >= 0) and (shutter_state < len(pyfoxsi.shutter_thickness)):
+            optical_path.append(Material(pyfoxsi.shutter_material, pyfoxsi.shutter_thickness[shutter_state]))
+            self.__shutter_state = shutter_state
+        else:
+            raise ValueError('Not a valid shutter state, must be 0 to {0}'.format(len(pyfoxsi.shutter_thickness)))
+        super().__init__(energy, effective_area, optical_path)
+        self.__number_of_telescopes = number_of_telescopes
+        self._optic_effective_area = u.Quantity(self.data['effective_area'], 'cm**2') * self.number_of_telescopes
+        self._factor = self._calc_factor_from_optical_path()
 
     @property
     def number_of_telescopes(self):
         """The total number of telescope modules"""
         return self.__number_of_telescopes
 
-    @number_of_telescopes.setter
-    def number_of_telescopes(self, x):
-        self.optics_effective_area['total'] = self.optics_effective_area['total'] / self.__number_of_telescopes * x
-        self.__number_of_telescopes = x
-
-    @property
-    def optical_path(self):
-        """The materials in the optical path including the detector"""
-        return self.__optical_path
-
-    @optical_path.setter
-    def optical_path(self, x):
-        self.optical_path = x
-        self._add_optical_path_to_effective_area()
-
     @property
     def shutter_state(self):
-        """The shutter state, allowed values are 0, 1, 2"""
+        """The shutter state"""
         return self.__shutter_state
 
     @shutter_state.setter
     def shutter_state(self, x):
         raise AttributeError('Cannot change shutter state. Create new object with desired shutter state')
-
-    def _add_optical_path_to_effective_area(self):
-        """Add the effect of the optical path to the effective area"""
-        energies = np.array(self.optics_effective_area.index)
-        # Remove 10% of flux due to spiders
-        factor = np.ones_like(energies) * 0.9
-        # Apply all of the materials in the optical path to factor
-        for material in self.optical_path:
-            print(material.name)
-            if material.name == pyfoxsi.detector_material:
-                # if it is the detector than we want the absorption
-                factor *= material.absorption(energies)
-            else:
-                factor *= material.transmission(energies)
-        self.effective_area['factor'] = factor
-        self.effective_area['total'] = factor * self.optics_effective_area['total']
-        self.effective_area['module'] = factor * self.optics_effective_area['module']
-
-
-class Material(object):
-    """An object which provides the optical properties of a material in x-rays
-
-    Parameters
-    ----------
-    material : str
-        A string representing a material (e.g. cdte, be, mylar, si)
-    thickness : `astropy.units.Quantity`
-        The thickness of the material in the optical path.
-
-    Examples
-    --------
-    >>> from pyfoxsi.response import Material
-    >>> import astropy.units as u
-    >>> detector = Material('cdte', 500 * u.um)
-    >>> thermal_blankets = Material('mylar', 0.5 * u.mm)
-    """
-
-    def __init__(self, material, thickness):
-        self.name = material
-        self.thickness = thickness
-
-        path = os.path.dirname(pyfoxsi.__file__)
-        for i in np.arange(3):
-            path = os.path.dirname(path)
-        path = os.path.join(path, 'data/')
-        filename = 'mass_attenuation_coefficient.hdf5'
-        data_file = os.path.join(path, filename)
-
-        h = h5py.File(data_file, 'r')
-        data = h[self.name]
-        self._source_data = data
-
-        self.density = u.Quantity(self._source_data.attrs['density'], self._source_data.attrs['density unit'])
-
-        data_energy_kev = np.log10(self._source_data[0,:] * 1000)
-        data_attenuation_coeff = np.log10(self._source_data[1,:])
-        self._f = interpolate.interp1d(data_energy_kev, data_attenuation_coeff, bounds_error=False, fill_value=0.0)
-        self._mass_attenuation_coefficient_func = lambda x: 10 ** self._f(np.log10(x))
-
-    def __repr__(self):
-        """Returns a human-readable representation."""
-        return '<Material ' + str(self.name) + ' ' + str(self.thickness) + '>'
-
-    def transmission(self, energy):
-    	"""Provide the transmission fraction (0 to 1).
-
-        Parameters
-        ----------
-        energy : `astropy.units.Quantity`
-            An array of energies in keV
-        """
-    	coefficients = self._mass_attenuation_coefficient_func(energy) * u.cm ** 2 / u.gram
-    	transmission = np.exp(- coefficients * self.density * self.thickness)
-    	return transmission
-
-    def absorption(self, energy):
-	    """Provides the absorption fraction (0 to 1).
-
-        Parameters
-        ----------
-        energy : `astropy.units.Quantity`
-            An array of energies in keV.
-        """
-	    return 1 - self.transmission(energy)
-
-    def plot(self, axes=None):
-        if axes is None:
-            axes = plt.gca()
-        energies = np.arange(1, 60)
-        axes.plot(energies, self.transmission(energies), label='Transmission')
-        axes.plot(energies, self.absorption(energies), label='Absorption')
-        axes.set_ylim(0, 1.2)
-        axes.legend()
-        axes.set_title(self.name + ' ' + str(self.thickness))
-        axes.set_xlabel('Energy [keV]')

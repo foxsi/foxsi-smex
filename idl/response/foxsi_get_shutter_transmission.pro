@@ -28,9 +28,12 @@
 FUNCTION foxsi_get_shutter_transmission, shutter_state, SHUTTER_THICK_MM = shutter_thick_mm, $
 				 ENERGY_ARR = energy_arr, PLOT = plot
 
+    ; load the foxsi-smex common block
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
-        foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
+    foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
+    foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
+    foxsi_stc_aperture_area_mm2, foxsi_stc_detector_material, foxsi_stc_detector_thickness_mm, $
+    foxsi_stc_filter_material, foxsi_stc_filter_thickness_um
 
     IF shutter_state GT n_elements(foxsi_shutters_thickness_mm)-1 THEN BEGIN
         print,'Unknown shutter state'

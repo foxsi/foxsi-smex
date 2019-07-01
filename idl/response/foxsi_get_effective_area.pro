@@ -33,7 +33,9 @@ FUNCTION foxsi_get_effective_area, ENERGY_ARR = energy_arr, PLOT = plot, $
 
     COMMON foxsi_smex_vars, foxsi_root_path, foxsi_data_path, foxsi_name, $
         foxsi_optic_effarea, foxsi_number_of_modules, foxsi_shell_ids, $
-        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm
+        foxsi_shutters_thickness_mm, foxsi_detector_thickness_mm, foxsi_blanket_thickness_mm, $
+        foxsi_stc_aperture_area_mm2, foxsi_stc_detector_material, foxsi_stc_detector_thickness_mm, $
+        foxsi_stc_filter_material, foxsi_stc_filter_thickness_um
 
     IF keyword_set(energy_arr) THEN BEGIN
         optics_eff_area = foxsi_get_optics_effective_area(energy_arr = energy_arr, position=position)

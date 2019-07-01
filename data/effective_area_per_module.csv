@@ -2,7 +2,7 @@
 # energy in keV
 # effective area in cm^2 including 10% vignetting due to spider
 # to get total effective area multiple by the number of modules (in parens)
-energy,14.0 m (2)
+energy,effective_area
 1,32.66
 2,31.84
 3,30.71
